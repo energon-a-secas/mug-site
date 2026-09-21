@@ -403,3 +403,10 @@ the next call. Additive: a caller that reads only `page` is unaffected.
 **A2 (2026-09-21, before any consumer existed).** C1 `source.url` is optional for
 `paste` and `manual` listings, which may have no page to point at. Every other
 platform still requires it.
+
+**A3 (2026-09-21, before any consumer existed).** C7 rule 1 compares the listing with
+what the same shop page said last time (`mugSources.seen`), not with the curated mug:
+otherwise every admin rename reads as a change at the shop. Rules 2 and 3 (same GTIN,
+same brand and SKU) from a shop page the mug does not know yet are **linked**: a
+`mugSources` row is added and nothing is staged, because a barcode match is not a
+question worth an admin's time.
