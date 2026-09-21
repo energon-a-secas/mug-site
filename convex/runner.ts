@@ -90,6 +90,7 @@ export const startScan = internalMutation({
         include: source.include,
         exclude: source.exclude,
         brand: brand ? brand.name : null,
+        currency: source.currency ?? null,
       },
     };
   },

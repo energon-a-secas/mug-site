@@ -28,6 +28,7 @@ const BRANDS: SeedBrand[] = [
 
 type SeedSource = {
   slug: string;
+  currency?: string;
   name: string;
   brand: string;
   adapter: "shopify" | "manual";
@@ -39,27 +40,27 @@ type SeedSource = {
 
 const SOURCES: SeedSource[] = [
   {
-    slug: "abystyle-us", name: "ABYstyle US shop", brand: "ABYstyle", adapter: "shopify", baseUrl: "https://abystyle.us",
+    slug: "abystyle-us", currency: "USD", name: "ABYstyle US shop", brand: "ABYstyle", adapter: "shopify", baseUrl: "https://abystyle.us",
     entryUrls: ["https://abystyle.us/collections/3d-mugs", "https://abystyle.us/collections/mugs"], watch: true,
     notes: "Shopify, 200 from residential and datacenter origins. 9 3D mugs, 38 mugs. The EU shop (abystyle.com) is challenged.",
   },
   {
-    slug: "bioworld", name: "Bioworld shop", brand: "Bioworld", adapter: "shopify", baseUrl: "https://shop.bioworldmerch.com",
+    slug: "bioworld", currency: "USD", name: "Bioworld shop", brand: "Bioworld", adapter: "shopify", baseUrl: "https://shop.bioworldmerch.com",
     entryUrls: ["https://shop.bioworldmerch.com/collections/sculpted-mugs-sippers", "https://shop.bioworldmerch.com/collections/mugs"], watch: true,
     notes: "Maker of the Ewok bas relief mug; carries the former Vandor line. Vendor field is the licence (A6). Prices look wholesale.",
   },
   {
-    slug: "geeki-tikis", name: "Geeki Tikis shop", brand: "Geeki Tikis", adapter: "shopify", baseUrl: "https://www.geekitikis.com",
+    slug: "geeki-tikis", currency: "USD", name: "Geeki Tikis shop", brand: "Geeki Tikis", adapter: "shopify", baseUrl: "https://www.geekitikis.com",
     entryUrls: ["https://www.geekitikis.com/collections/shop-mugs"], watch: true,
     notes: "Beeline Creative. 29 store-exclusive tiki mugs, no SKUs or GTINs.",
   },
   {
-    slug: "half-moon-bay", name: "Half Moon Bay shop", brand: "Half Moon Bay", adapter: "shopify", baseUrl: "https://www.halfmoonbayshop.co.uk",
+    slug: "half-moon-bay", currency: "GBP", name: "Half Moon Bay shop", brand: "Half Moon Bay", adapter: "shopify", baseUrl: "https://www.halfmoonbayshop.co.uk",
     entryUrls: ["https://www.halfmoonbayshop.co.uk/collections/mugs"], watch: false,
     notes: "134 mugs, 6 shaped; mostly printed licensed mugs. Product pages carry GTINs.",
   },
   {
-    slug: "erikstore", name: "Erik store (Grupo Erik)", brand: "Grupo Erik", adapter: "shopify", baseUrl: "https://erikstore.com",
+    slug: "erikstore", currency: "EUR", name: "Erik store (Grupo Erik)", brand: "Grupo Erik", adapter: "shopify", baseUrl: "https://erikstore.com",
     entryUrls: ["https://erikstore.com/collections/tazas"], watch: false,
     notes: "Spanish consumer store: 47 tazas, 5 of them 3D.",
   },
@@ -123,7 +124,11 @@ export const sources = internalMutation({
     }
     for (const source of SOURCES) {
       const found = await ctx.db.query("sources").withIndex("by_slug", (q) => q.eq("slug", source.slug)).unique();
-      if (found) continue;
+      if (found) {
+        // A13 arrived after the first seed: give an existing feed its currency once.
+        if (source.currency && !found.currency) await ctx.db.patch(found._id, { currency: source.currency, updatedAt: now });
+        continue;
+      }
       await ctx.db.insert("sources", {
         slug: source.slug,
         name: source.name,
@@ -136,6 +141,7 @@ export const sources = internalMutation({
         fetchVia: "cloud",
         watch: source.watch,
         enabled: source.adapter !== "manual",
+        currency: source.currency,
         notes: source.notes,
         createdAt: now,
         updatedAt: now,

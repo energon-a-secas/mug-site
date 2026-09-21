@@ -121,6 +121,9 @@ export default defineSchema({
     fetchVia: v.union(v.literal("cloud"), v.literal("local")),
     watch: v.boolean(),
     enabled: v.boolean(),
+    // A13: the shop's currency, when the admin knows it, so a feed's bare
+    // prices can be kept. Never guessed.
+    currency: v.optional(v.string()),
     notes: v.optional(v.string()),
     lastProbe: v.optional(
       v.object({

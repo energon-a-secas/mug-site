@@ -75,11 +75,22 @@ function parsesAsUrl(value) {
   }
 }
 
+/**
+ * A13: the currency a source declares for its shop, three letters, or nothing.
+ * Shopify's products.json carries prices without one, and a guessed currency is
+ * a wrong fact, so a price is only kept when the source says which it is.
+ */
+export function sourceCurrency(value) {
+  if (typeof value !== 'string') return undefined;
+  const code = value.trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(code) ? code : undefined;
+}
+
 /** { ok: true, url } when body.url is an absolute http(s) URL, else BAD_REQUEST. */
 export function validateUrlBody(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return fail('BAD_REQUEST', 'The body has to be a JSON object.');
   if (!parsesAsUrl(body.url)) return fail('BAD_REQUEST', '`url` has to be an absolute http or https URL.');
-  return { ok: true, url: body.url.trim(), brand: sourceBrand(body.brand) };
+  return { ok: true, url: body.url.trim(), brand: sourceBrand(body.brand), currency: sourceCurrency(body.currency) };
 }
 
 function wordList(value, name) {
@@ -89,7 +100,7 @@ function wordList(value, name) {
   return { ok: true, words };
 }
 
-/** C3 /v1/discover's body, checked: { adapter, url, page?, include?, exclude?, brand? (A6) }. */
+/** C3 /v1/discover's body, checked: { adapter, url, page?, include?, exclude?, brand? (A6), currency? (A13) }. */
 export function validateDiscover(body) {
   const base = validateUrlBody(body);
   if (!base.ok) return base;
@@ -101,7 +112,7 @@ export function validateDiscover(body) {
   if (!include.ok) return include;
   const exclude = wordList(body.exclude, 'exclude');
   if (!exclude.ok) return exclude;
-  return { ok: true, adapter: body.adapter, url: base.url, page, include: include.words, exclude: exclude.words, brand: base.brand };
+  return { ok: true, adapter: body.adapter, url: base.url, page, include: include.words, exclude: exclude.words, brand: base.brand, currency: base.currency };
 }
 
 // ── probe ────────────────────────────────────────────────────────────────────
@@ -170,7 +181,7 @@ function keepListings(results, { include, exclude }) {
   return { listings, skipped };
 }
 
-async function discoverShopify({ url, page, include, exclude, brand }, ctx) {
+async function discoverShopify({ url, page, include, exclude, brand, currency }, ctx) {
   const got = await politeFetch(shopifyProductsUrl(url, page), net(ctx, { kind: 'json' }));
   if (!got.ok) return got;
   const data = parseJson(got);
@@ -179,7 +190,7 @@ async function discoverShopify({ url, page, include, exclude, brand }, ctx) {
   if (!products) return fail('UPSTREAM_ERROR', `${hostOf(got.url)} did not answer with a Shopify products feed.`, { upstreamStatus: got.status });
   const baseUrl = shopifyBase(url);
   const now = clock(ctx);
-  const { listings, skipped } = keepListings(products.map((p) => fromShopifyProduct(p, { baseUrl, via: ctx.via, now, brand })), { include, exclude });
+  const { listings, skipped } = keepListings(products.map((p) => fromShopifyProduct(p, { baseUrl, via: ctx.via, now, brand, currency })), { include, exclude });
   return { ok: true, listings, skipped, next: products.length >= FEED_PAGE_SIZE ? { page: page + 1 } : null, fetched: fetchedOf(got) };
 }
 
@@ -303,7 +314,7 @@ const STOP_AFTER_JSON = ['UPSTREAM_TIMEOUT', 'URL_NOT_ALLOWED'];
  * first; everything else (and a JSON miss) reads the HTML with fromHtml
  * (JSON-LD, then OpenGraph). No product found is NOT_A_PRODUCT.
  */
-export async function extract({ url, brand }, ctx) {
+export async function extract({ url, brand, currency }, ctx) {
   const checked = checkUrl(url, { env: ctx.env });
   if (!checked.ok) return checked;
   const now = clock(ctx);
@@ -313,7 +324,7 @@ export async function extract({ url, brand }, ctx) {
       const data = parseJson(got);
       const product = data.ok && data.value && typeof data.value === 'object' ? data.value.product : null;
       if (product && typeof product === 'object') {
-        const r = fromShopifyProduct(product, { baseUrl: shopifyBase(checked.url.href), via: ctx.via, now, brand });
+        const r = fromShopifyProduct(product, { baseUrl: shopifyBase(checked.url.href), via: ctx.via, now, brand, currency });
         if (r.ok) return { ok: true, listing: r.listing, fetched: fetchedOf(got) };
       }
     } else if (STOP_AFTER_JSON.includes(got.code)) {

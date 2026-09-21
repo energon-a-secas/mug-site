@@ -35,7 +35,7 @@ import { sourceBrand } from '../shared/extract/opengraph.js';
 import { sniffImage } from '../shared/images/sniff.js';
 import { checkAddress } from '../shared/net/guard.js';
 import { politeFetch } from '../shared/net/polite.js';
-import { discover, extract, validateDiscover } from '../worker/src/shop.js';
+import { discover, extract, sourceCurrency, validateDiscover } from '../worker/src/shop.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -400,6 +400,7 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
   const { runId, source } = started;
   if (!runId || !source || typeof source !== 'object') throw new RunnerError('Convex answered /runner/scan without a runId and source.');
   const brand = sourceBrand(source.brand);
+  const currency = sourceCurrency(source.currency);
   const ctx = context(deps);
   const summary = { runId, pages: 0, listings: 0, urls: 0, extracted: 0, failed: 0, staged: 0, unchanged: 0, skipped: 0, codes: {} };
   const errors = [];
@@ -426,7 +427,7 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
     for (const entry of entries) {
       let url = entry;
       for (let page = 1; pagesLeft > 0; page++) {
-        const args = validateDiscover({ adapter: source.adapter, url, page, include: source.include, exclude: source.exclude, brand });
+        const args = validateDiscover({ adapter: source.adapter, url, page, include: source.include, exclude: source.exclude, brand, currency });
         if (!args.ok) {
           errors.push(`${entry}: ${args.message}`);
           break;
@@ -448,7 +449,7 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
         pending.push(...listings);
         await flush(false);
         for (const productUrl of urls) {
-          const got = await extract({ url: productUrl, brand }, ctx);
+          const got = await extract({ url: productUrl, brand, currency }, ctx);
           if (got.ok) {
             summary.extracted++;
             pending.push(got.listing);

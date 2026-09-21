@@ -10,6 +10,10 @@
 // and so are characters whose names are ordinary words (Penguin, Robin, Link,
 // Boo, Mew, Eleven, Goofy): a penguin mug is not DC Comics. A wrong suggestion
 // costs the admin more than a missing one.
+//
+// `nameMatches: false` is for a franchise whose own name is an ordinary word
+// ("Best Friends Mug" is not Friends, a bleach joke is not Bleach): it is
+// found only through its aliases and characters.
 
 export const FRANCHISES = Object.freeze([
   { name: 'Astro Bot', aliases: ['astro bot', 'astrobot'], characters: [] },
@@ -54,17 +58,42 @@ export const FRANCHISES = Object.freeze([
   { name: 'Transformers', aliases: ['transformers'], characters: ['Optimus Prime', 'Megatron'] },
   { name: 'Fallout', aliases: ['fallout'], characters: ['Vault Boy'] },
   { name: 'The Witcher', aliases: ['the witcher', 'witcher'], characters: [] },
-  { name: 'Halo', aliases: ['master chief'], characters: [] },
+  { name: 'Halo', nameMatches: false, aliases: ['master chief', 'halo infinite'], characters: [] },
   { name: 'Pac-Man', aliases: ['pac-man', 'pacman'], characters: [] },
   { name: 'Dungeons & Dragons', aliases: ['dungeons & dragons', 'dungeons and dragons'], characters: ['Beholder'] },
-  { name: 'The Office', aliases: ['dunder mifflin'], characters: [] },
-  { name: 'Friends', aliases: ['central perk'], characters: [] },
+  { name: 'The Office', nameMatches: false, aliases: ['dunder mifflin'], characters: [] },
+  { name: 'Death Note', aliases: ['death note'], characters: ['Ryuk', 'Misa Amane'] },
+  { name: 'Junji Ito', aliases: ['junji ito', 'uzumaki', 'tomie'], characters: [] },
+  { name: 'Hatsune Miku', aliases: ['hatsune miku', 'vocaloid'], characters: [] },
+  { name: 'Hunter x Hunter', aliases: ['hunter x hunter'], characters: ['Killua', 'Gon Freecss', 'Hisoka'] },
+  { name: 'Berserk', nameMatches: false, aliases: ['berserk manga'], characters: ['Griffith'] },
+  { name: 'Dan Da Dan', aliases: ['dan da dan', 'dandadan'], characters: ['Okarun'] },
+  { name: 'Solo Leveling', aliases: ['solo leveling'], characters: ['Sung Jinwoo'] },
+  { name: 'The Legend of Vox Machina', aliases: ['vox machina', 'critical role'], characters: [] },
+  { name: 'Spy x Family', aliases: ['spy x family', 'spy family'], characters: ['Anya Forger'] },
+  { name: "JoJo's Bizarre Adventure", aliases: ["jojo's bizarre adventure", 'jojos bizarre adventure'], characters: [] },
+  { name: 'Bleach', nameMatches: false, aliases: ['bleach anime'], characters: ['Ichigo Kurosaki'] },
+  { name: 'Neon Genesis Evangelion', aliases: ['evangelion'], characters: [] },
+  { name: 'Gundam', aliases: ['gundam'], characters: [] },
+  { name: 'Cowboy Bebop', aliases: ['cowboy bebop'], characters: ['Spike Spiegel'] },
+  { name: 'Fullmetal Alchemist', aliases: ['fullmetal alchemist'], characters: [] },
+  { name: 'Haikyu!!', aliases: ['haikyu'], characters: [] },
+  { name: 'Frieren', aliases: ['frieren'], characters: [] },
+  { name: 'Final Fantasy', aliases: ['final fantasy'], characters: ['Chocobo', 'Moogle'] },
+  { name: 'Kingdom Hearts', aliases: ['kingdom hearts'], characters: [] },
+  { name: 'Assassin\'s Creed', aliases: ["assassin's creed", 'assassins creed'], characters: [] },
+  { name: 'Resident Evil', aliases: ['resident evil'], characters: [] },
+  { name: 'Street Fighter', aliases: ['street fighter'], characters: [] },
+  { name: 'Crash Bandicoot', aliases: ['crash bandicoot'], characters: [] },
+  { name: 'Peanuts', nameMatches: false, aliases: [], characters: ['Snoopy', 'Charlie Brown'] },
+  { name: 'Garfield', aliases: ['garfield'], characters: [] },
+  { name: 'Friends', nameMatches: false, aliases: ['central perk'], characters: [] },
 ]);
 
 // Folded, for nameKey: franchise words say which shelf a mug sits on, not
 // which mug it is, so they leave the key.
 export const FRANCHISE_ALIASES = Object.freeze(
-  FRANCHISES.flatMap((f) => [...f.aliases, f.name.toLowerCase()])
+  FRANCHISES.flatMap((f) => [...f.aliases, ...(f.nameMatches === false ? [] : [f.name.toLowerCase()])])
     .map((a) => a.normalize('NFKD').replace(/\p{M}/gu, ''))
     .sort((a, b) => b.length - a.length),
 );

@@ -475,3 +475,15 @@ test('a thrown error inside a route answers INTERNAL as JSON, not an HTML 500 pa
   assert.deepEqual([r.res.status, r.json.code, r.json.ok], [500, 'INTERNAL', false]);
   assert.equal(JSON.stringify(r.json).includes('boom'), false, 'the internal error is logged, not answered');
 });
+
+test('A13: a declared shop currency turns bare feed prices into prices; nothing is guessed', async () => {
+  web(shopRoutes());
+  const bare = await post('/v1/discover', { adapter: 'shopify', url: 'https://shop.example/' });
+  assert.ok(bare.json.listings.every((l) => l.price === undefined), 'no currency: no price');
+  const usd = await post('/v1/discover', { adapter: 'shopify', url: 'https://shop.example/', currency: 'usd' });
+  const priced = usd.json.listings.filter((l) => l.price);
+  assert.ok(priced.length > 0, 'the declared currency makes prices');
+  assert.ok(priced.every((l) => l.price.currency === 'USD' && l.price.amount > 0));
+  const junk = await post('/v1/discover', { adapter: 'shopify', url: 'https://shop.example/', currency: 'dollars' });
+  assert.ok(junk.json.listings.every((l) => l.price === undefined), 'a malformed currency is ignored, not guessed at');
+});

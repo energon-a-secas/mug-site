@@ -111,6 +111,7 @@ export function sourceFormHtml() {
       <div class="field"><label for="src-name">Name</label><input class="input" id="src-name" name="name" type="text" maxlength="80" required autocomplete="off" placeholder="ABYstyle (EU shop)"></div>
       <div class="field"><label for="src-brand">Brand</label><input class="input" id="src-brand" name="brand" type="text" maxlength="80" autocomplete="off" aria-describedby="src-brand-hint"><p class="hint" id="src-brand-hint">The maker. Every listing from this source takes it as its brand.</p></div>
       <div class="field"><label for="src-adapter">Adapter</label><select class="select" id="src-adapter" name="adapter">${adapters}</select></div>
+      <div class="field"><label for="src-currency">Shop currency</label><input class="input" id="src-currency" name="currency" maxlength="3" placeholder="USD" autocomplete="off" aria-describedby="src-currency-hint"><p class="hint" id="src-currency-hint">Three letters. Shopify feeds give prices without one, so prices are kept only when this is set.</p></div>
       <div class="field"><label for="src-via">Fetched by</label><select class="select" id="src-via" name="fetchVia" aria-describedby="src-via-hint"><option value="cloud">The cloud (the Worker)</option><option value="local">The runner only</option></select><p class="hint" id="src-via-hint">Pick the runner for a shop that refuses datacenter addresses.</p></div>
       <div class="field field--wide"><label for="src-base">Shop address</label><input class="input" id="src-base" name="baseUrl" type="url" inputmode="url" required autocomplete="off" placeholder="https://shop.example"></div>
       <div class="field field--wide"><label for="src-entries">Entry pages, one per line</label><textarea class="textarea" id="src-entries" name="entryUrls" rows="3" aria-describedby="src-entries-hint"></textarea><p class="hint" id="src-entries-hint">Collection, search or sitemap pages, up to 10. With none, a scan starts from the shop address.</p></div>
@@ -141,6 +142,7 @@ export function sourceArgs(values) {
     include: commaList(values.include),
     exclude: commaList(values.exclude),
     fetchVia: values.fetchVia === 'local' ? 'local' : 'cloud',
+    currency: String(values.currency || '').trim().toUpperCase(),
     watch: !!values.watch,
     enabled: !!values.enabled,
     notes: String(values.notes || '').trim(),

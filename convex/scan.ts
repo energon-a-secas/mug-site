@@ -24,7 +24,7 @@ export const context = internalQuery({
     if (!source) return null;
     // A6: the source's own brand, because a shop's vendor field is often the licence.
     const brand = source.brandId ? await ctx.db.get(source.brandId) : null;
-    return { run, source, brand: brand ? brand.name : null };
+    return { run, source, brand: brand ? brand.name : null, currency: source.currency ?? null };
   },
 });
 
@@ -33,7 +33,7 @@ export const discover = internalAction({
   handler: async (ctx, args) => {
     const found = await ctx.runQuery(internal.scan.context, { runId: args.runId });
     if (!found || found.run.status !== "discovering") return;
-    const { run, source, brand } = found;
+    const { run, source, brand, currency } = found;
     const entries = source.entryUrls.length ? source.entryUrls : [source.baseUrl];
     if (run.entryIndex >= entries.length) {
       await ctx.runMutation(internal.scan.finishDiscovery, { runId: args.runId });
@@ -47,6 +47,7 @@ export const discover = internalAction({
         include: source.include,
         exclude: source.exclude,
         ...(brand ? { brand } : {}),
+        ...(currency ? { currency } : {}),
       },
     });
     if (!answer.ok) {
@@ -151,11 +152,12 @@ export const extractNext = internalAction({
     if (!next || next.status !== "extracting") return;
     const found = await ctx.runQuery(internal.scan.context, { runId: args.runId });
     const brand = found?.brand;
+    const currency = found?.currency;
     if (!next.row || !next.row.url) {
       await ctx.runMutation(internal.scan.finishExtract, { runId: args.runId });
       return;
     }
-    const answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url: next.row.url, ...(brand ? { brand } : {}) } });
+    const answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url: next.row.url, ...(brand ? { brand } : {}), ...(currency ? { currency } : {}) } });
     await ctx.runMutation(internal.scan.extracted, {
       runId: args.runId,
       stagingId: next.row.id,

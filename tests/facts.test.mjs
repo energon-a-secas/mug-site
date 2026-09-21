@@ -72,3 +72,21 @@ test('franchise and character suggestions', () => {
   assert.equal(detectCharacter('Joker Head 3D Mug'), 'Joker');
   assert.equal(detectCharacter('Plain mug'), null);
 });
+
+test('styles and franchises the real feeds needed (2026-09-21 run)', () => {
+  assert.equal(detectStyle('Death Note - Kira & L Magic Mug'), 'printed', 'a magic mug is a heat-change print');
+  assert.equal(detectStyle('Berserk Guts & Griffith Ceramic Coffee Mug'), 'printed');
+  assert.equal(detectStyle('Pikachu 3D Coffee Mug'), 'sculpted', 'sculpted is read before printed');
+  assert.equal(detectStyle('JUNJI ITO - Slug Girl Mug, 11 oz.'), 'other', 'still honest when nothing says');
+  assert.equal(detectFranchise('JUNJI ITO - Slug Girl Mug'), 'Junji Ito');
+  assert.equal(detectFranchise('Hatsune Miku Pastel Mug'), 'Hatsune Miku');
+  assert.equal(detectFranchise('Hunter x Hunter Killua Coffee Mug'), 'Hunter x Hunter');
+  assert.equal(detectCharacter('Hunter x Hunter Killua Coffee Mug'), 'Killua');
+  assert.equal(detectFranchise('Dan Da Dan Momo & Okarun Mug'), 'Dan Da Dan');
+  assert.equal(detectFranchise('Clorox bleach mug'), null, 'bleach alone is a word, not the anime');
+  assert.equal(detectFranchise('Best Friends Mug'), null, 'friends alone is not the sitcom');
+  assert.equal(detectFranchise('World Best Boss in the Office Mug'), null);
+  assert.equal(detectFranchise('Angel Halo Mug'), null);
+  assert.equal(detectFranchise('Berserk Guts & Griffith Ceramic Coffee Mug'), 'Berserk', 'still found through a character');
+  assert.equal(detectFranchise('Snoopy Coffee Mug'), 'Peanuts');
+});

@@ -12,7 +12,7 @@ import { probeText, scanOutcome, sourceArgs, sourceCard, sourceFormHtml } from '
 function formValues(form) {
   const get = (name) => form.elements.namedItem(name);
   const values = {};
-  for (const name of ['sourceId', 'name', 'brand', 'adapter', 'baseUrl', 'entryUrls', 'include', 'exclude', 'fetchVia', 'notes']) {
+  for (const name of ['sourceId', 'name', 'brand', 'adapter', 'baseUrl', 'entryUrls', 'include', 'exclude', 'fetchVia', 'currency', 'notes']) {
     values[name] = get(name).value;
   }
   values.watch = get('watch').checked;
@@ -33,6 +33,7 @@ function fillForm(form, s) {
   set('include', s ? s.include.join(', ') : '');
   set('exclude', s ? s.exclude.join(', ') : '');
   set('fetchVia', s ? s.fetchVia : 'cloud');
+  set('currency', (s && s.currency) || '');
   set('notes', (s && s.notes) || '');
   form.elements.namedItem('watch').checked = !!(s && s.watch);
   form.elements.namedItem('enabled').checked = s ? !!s.enabled : true;

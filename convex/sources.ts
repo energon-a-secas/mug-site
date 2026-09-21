@@ -52,6 +52,7 @@ export const save = mutation({
     fetchVia: v.union(v.literal("cloud"), v.literal("local")),
     watch: v.boolean(),
     enabled: v.boolean(),
+    currency: v.optional(v.string()),
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -70,6 +71,8 @@ export const save = mutation({
       if (!url) return fail("bad-url", `Not an https URL: ${raw.slice(0, 80)}`);
       entryUrls.push(url);
     }
+    const currency = (args.currency || "").trim().toUpperCase();
+    if (currency && !/^[A-Z]{3}$/.test(currency)) return fail("bad-currency", "Currency is a three-letter code such as USD.");
     const brand = args.brand && args.brand.trim() ? await findOrCreateBrand(ctx.db, cleanText(args.brand, 80), now) : null;
     const fields = compact({
       name,
@@ -82,13 +85,14 @@ export const save = mutation({
       fetchVia: args.fetchVia,
       watch: args.watch,
       enabled: args.enabled,
+      currency: currency || undefined,
       notes: cleanText(args.notes, 500) || undefined,
       updatedAt: now,
     });
     if (args.id) {
       const current = await ctx.db.get(args.id);
       if (!current) return fail("not-found", "That source no longer exists.");
-      await ctx.db.patch(args.id, { ...fields, brandId: brand?._id, notes: fields.notes });
+      await ctx.db.patch(args.id, { ...fields, brandId: brand?._id, currency: fields.currency, notes: fields.notes });
       return done({ id: args.id, slug: current.slug });
     }
     let slug = slugify(name) || "source";

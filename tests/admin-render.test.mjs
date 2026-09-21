@@ -252,8 +252,8 @@ test('sources: the runner command, the form, and save arguments', () => {
   assert.match(note.extra, /<code class="admin-code">node runner\/mug-runner\.mjs scan silver-buffalo<\/code>/);
   assert.equal(note.text, 'This shop refuses cloud fetching. On your workstation run:');
   assertLabelled(sourceFormHtml());
-  assert.deepEqual(sourceArgs({ sourceId: '', name: ' ABY ', brand: '', adapter: 'shopify', baseUrl: 'https://aby.example', entryUrls: 'https://aby.example/c/mugs\n', include: 'mug, tasse,', exclude: '', fetchVia: 'cloud', watch: true, enabled: false, notes: '' }), {
-    name: 'ABY', brand: '', adapter: 'shopify', baseUrl: 'https://aby.example', entryUrls: ['https://aby.example/c/mugs'], include: ['mug', 'tasse'], exclude: [], fetchVia: 'cloud', watch: true, enabled: false, notes: '',
+  assert.deepEqual(sourceArgs({ sourceId: '', name: ' ABY ', brand: '', adapter: 'shopify', baseUrl: 'https://aby.example', entryUrls: 'https://aby.example/c/mugs\n', include: 'mug, tasse,', exclude: '', fetchVia: 'cloud', currency: '', watch: true, enabled: false, notes: '' }), {
+    name: 'ABY', brand: '', adapter: 'shopify', baseUrl: 'https://aby.example', entryUrls: ['https://aby.example/c/mugs'], include: ['mug', 'tasse'], exclude: [], fetchVia: 'cloud', currency: '', watch: true, enabled: false, notes: '',
   });
   const manual = sourceCard({ _id: 's1', slug: 'amazon', name: 'Amazon', adapter: 'manual', baseUrl: 'https://www.amazon.com', entryUrls: [], include: [], exclude: [], fetchVia: 'cloud', watch: false, enabled: true, notes: EVIL, brand: null, lastRun: null });
   assert.match(manual, /Manual: paste or type/);

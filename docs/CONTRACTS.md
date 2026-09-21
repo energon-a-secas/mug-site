@@ -459,3 +459,11 @@ index's position, `#mug-child=N&mug-offset=M`) that is never sent to the shop. C
 refusal for now (RFC 9309), not a rule. Such a `ROBOTS_DISALLOWED` carries `retryable: true`,
 the Worker's envelope lets it through, and Convex retries it once (a page, a discover page
 and a single URL import alike). A real `Disallow` never carries it, and stays final.
+
+**A13 (2026-09-21, from the first real scan).** Shopify's `products.json` gives prices with no
+currency, so 0 of 47 real listings had a price. A source may declare its shop's `currency`
+(three letters, set by the admin, never guessed); `/v1/discover` and `/v1/extract` accept an
+optional `currency` and hand it to the Shopify extractor, and `/runner/scan` returns it. After
+the change the same 47 listings all carried USD prices. A thumbnail mirrored from a Shopify
+CDN's own 480 px copy (A5) is stored like any mirrored image, so its key starts `o/`; `t/` is
+for thumbnails the admin's browser makes.

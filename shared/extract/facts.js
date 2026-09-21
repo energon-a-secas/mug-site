@@ -54,7 +54,9 @@ const STYLE_RULES = [
   ['shaped', /\b(?:shaped|shape\s+mug)\b/],
   ['relief', /\b(?:bas[\s-]?relief|relief|embossed|debossed)\b/],
   ['sculpted', /\b(?:3d|3-d|sculpt(?:ed|ure)?|figural|head\s+mugs?|character\s+mugs?|toby\s+jugs?)\b/],
-  ['printed', /\b(?:print(?:ed)?|decal|logo|graphic|sublimat\w*|heat[\s-]?chang\w*|colou?r[\s-]?chang\w*)\b/],
+  // Sculpted, shaped and relief are read first, so "3D coffee mug" stays sculpted:
+  // a plain coffee mug or a magic (heat-change) one is a printed body.
+  ['printed', /\b(?:print(?:ed)?|decal|logo|graphic|sublimat\w*|heat[\s-]?chang\w*|colou?r[\s-]?chang\w*|magic\s+mugs?|coffee\s+mugs?)\b/],
 ];
 
 /** One of STYLES; "other" when the words say nothing. */
@@ -129,7 +131,7 @@ function wordRe(phrase) {
 
 const FRANCHISE_MATCHERS = FRANCHISES.map((f) => ({
   name: f.name,
-  aliases: [f.name, ...f.aliases].map(wordRe),
+  aliases: [...(f.nameMatches === false ? [] : [f.name]), ...f.aliases].map(wordRe),
   characters: f.characters.map((c) => ({ name: c, re: wordRe(c) })),
 }));
 
