@@ -23,12 +23,11 @@
   <link rel="canonical" href="{{CANONICAL}}">
   <meta property="og:locale" content="en_US">
   <meta name="theme-color" content="#040714">
-  <!-- og:image: uncomment when the social preview exists (1200x630 JPG from og-studio, `make og`)
   <meta property="og:image" content="https://mug.neorgon.com/og-preview.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Mug">
-  <meta name="twitter:image" content="https://mug.neorgon.com/og-preview.jpg"> -->
+  <meta property="og:image:alt" content="Mug: character mugs, catalogued and collected">
+  <meta name="twitter:image" content="https://mug.neorgon.com/og-preview.jpg">
   <!-- The Convex deployment the pages talk to. Empty until production exists;
        on localhost, ?convex=http://127.0.0.1:3210 points a page at a dev backend (js/backend.js). -->
   <meta name="neo-convex-url" content="{{CONVEX_URL}}">
@@ -71,8 +70,8 @@
     <div class="header-right">
       <div class="header-actions">
         <a class="btn btn--ghost btn--sm" href="/"{{NAV_CATALOG}} data-keep-mobile>Catalog</a>
-        <a class="btn btn--ghost btn--sm" href="/community/"{{NAV_COMMUNITY}}>Community</a>
         <a class="btn btn--ghost btn--sm" href="/shelf/"{{NAV_SHELF}} data-keep-mobile>My shelf</a>
+        <a class="btn btn--ghost btn--sm" href="/community/"{{NAV_COMMUNITY}}>Community</a>
         <a class="btn btn--ghost btn--sm" href="/admin/"{{NAV_ADMIN}} id="adminLink" hidden>Admin</a>
       </div>
       <div class="neo-auth" data-neo-auth data-keep-mobile hidden></div>

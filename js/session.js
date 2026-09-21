@@ -155,7 +155,10 @@ function paintDevChip(label) {
   slot.textContent = '';
   const chip = document.createElement('span');
   chip.className = 'dev-chip';
-  chip.title = 'Signed in with a local dev token (scripts/dev-auth.mjs). Production never accepts it.';
-  chip.textContent = `Dev: ${label}`;
+  // Short on purpose: the header keeps this slot on phones, and a long label
+  // collided with the nav at 375 px. The name is in the tooltip.
+  chip.title = `Signed in as ${label} with a local dev token (scripts/dev-auth.mjs). Production never accepts it.`;
+  chip.setAttribute('aria-label', `Dev sign-in: ${label}`);
+  chip.textContent = 'Dev';
   slot.appendChild(chip);
 }

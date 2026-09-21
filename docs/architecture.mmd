@@ -1,0 +1,38 @@
+flowchart LR
+  subgraph Pages["GitHub Pages: mug.neorgon.com"]
+    P["catalogue, mug, maker,<br/>community, shelf, /u/"]
+    AD["/admin/"]
+  end
+  subgraph Convex["Convex"]
+    Q["public and signed-in functions<br/>catalog, shelf, profiles, community"]
+    A["admin functions<br/>sources, runs, staging, importer,<br/>mugs, images, moderation"]
+    S["scheduler<br/>scan:discover, scan:extractNext,<br/>images:mirrorMug"]
+    H["HTTP actions<br/>/runner/*"]
+    DB[("tables")]
+    FS[("file storage<br/>fallback images, uploads")]
+  end
+  subgraph Cloudflare["Cloudflare"]
+    W["Worker mug-proxy<br/>/v1/probe, /v1/discover,<br/>/v1/extract, /v1/images"]
+    I["GET /i/key"]
+    R2[("R2 mug-images")]
+  end
+  Clerk["Clerk<br/>clerk.neorgon.com"]
+  Shops["brand shops<br/>robots.txt first"]
+  Runner["local runner<br/>owner's workstation"]
+
+  P -- "ConvexHttpClient" --> Q
+  AD -- "Clerk token, ADMIN_SUBJECTS" --> A
+  P -. "sign in, Auth Kit" .-> Clerk
+  P -- "img src" --> I
+  A --> S
+  S -- "Bearer MUG_PROXY_TOKEN" --> W
+  W --> Shops
+  W --> R2
+  I --> R2
+  S -. "no Worker: last resort" .-> FS
+  Runner -- "Bearer mugr_ token" --> H
+  Runner --> Shops
+  Q --> DB
+  A --> DB
+  S --> DB
+  H --> DB

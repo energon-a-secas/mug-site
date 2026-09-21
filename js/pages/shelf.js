@@ -48,7 +48,7 @@ function profilePanel(d) {
       <div class="field"><label for="handleInput">Address</label>
         <div class="toolbar" style="flex-wrap:nowrap"><span class="muted mono" aria-hidden="true">/u/?</span><input class="input" name="handle" id="handleInput" maxlength="31" autocomplete="off" value="${escHtml(p.handle || '')}" aria-describedby="handleHint"><button class="btn btn--secondary btn--sm" type="submit">Save</button></div>
       </div>
-      <p class="hint" id="handleHint" aria-live="polite">${escHtml(HANDLE_MESSAGES['handle-invalid'])}</p>
+      <p class="hint" id="handleHint" aria-live="polite">${escHtml(p.handle ? `Your shelf is at mug.neorgon.com/u/?${p.handle}` : HANDLE_MESSAGES['handle-invalid'])}</p>
     </form>
     <form id="profileForm" class="stack stack--tight">
       <label class="field"><span>Display name</span><input class="input" name="displayName" maxlength="40" value="${escHtml(p.displayName || '')}"></label>
