@@ -28,11 +28,14 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Mug: character mugs, catalogued and collected">
   <meta name="twitter:image" content="https://mug.neorgon.com/og-preview.jpg">
-  <!-- The Convex deployment the pages talk to. Empty until production exists;
-       on localhost, ?convex=http://127.0.0.1:3210 points a page at a dev backend (js/backend.js). -->
+  <!-- The production Convex deployment (CONVEX_URL in scripts/pages.py); on
+       localhost, ?convex=http://127.0.0.1:3210 points a page at a dev backend (js/backend.js). -->
   <meta name="neo-convex-url" content="{{CONVEX_URL}}">
   <meta name="clerk-publishable-key" content="pk_live_Y2xlcmsubmVvcmdvbi5jb20k">
   <meta name="neo-auth-site" content="Mug">
+  <!-- Footer Kit stamps: a Source link and the last update (root smoke check 22). -->
+  <meta name="neo-repo" content="energon-a-secas/mug-site">
+  <meta name="neo-updated" content="updated Sep 2026">
   <!-- Fleet design tokens: canonical, do not redeclare locally (docs/references/new-project-context.md, Design) -->
   <link rel="stylesheet" href="https://cdn.neorgon.org/v1.0.0/styles/base.css">
   <link rel="stylesheet" href="/css/style.css">
