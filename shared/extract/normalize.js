@@ -187,6 +187,9 @@ export function normalizeListing(input, { now = Date.now() } = {}) {
   if (!name) return fail('no-name', 'The product has no name.');
 
   const productType = boundedString(input.productType, LIMITS.productType);
+  // A8: the shop's own vendor when the source named the maker. Never part of
+  // the text facts are read from; only offered as the franchise.
+  const vendor = boundedString(input.vendor, LIMITS.vendor);
   const tagList = tags(input.tags);
   const description = input.description ? plainText(input.description).slice(0, LIMITS.description).trim() : '';
 
@@ -202,7 +205,9 @@ export function normalizeListing(input, { now = Date.now() } = {}) {
   const material = MATERIALS.includes(input.material) ? input.material : detectMaterial(allText);
   const care = detectCare(allText);
   const franchiseIn = boundedString(input.franchise, LIMITS.franchise);
-  const franchise = franchiseIn ? detectFranchise(franchiseIn) || franchiseIn : detectFranchise(titleText) || undefined;
+  const franchise = franchiseIn
+    ? detectFranchise(franchiseIn) || franchiseIn
+    : detectFranchise(titleText) || (vendor ? detectFranchise(vendor) : null) || undefined;
   const character = boundedString(input.character, LIMITS.character) || detectCharacter(titleText) || undefined;
   const isMug = verdictOf(input.isMug) || mugVerdict({ name, tags: tagList, productType });
 
@@ -233,6 +238,7 @@ export function normalizeListing(input, { now = Date.now() } = {}) {
     tags: tagList,
     isMug,
     productType,
+    vendor,
   };
   return { ok: true, listing: omitUndefined(listing) };
 }

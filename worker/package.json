@@ -1,0 +1,13 @@
+{
+  "name": "mug-proxy",
+  "private": true,
+  "type": "module",
+  "description": "Mug's Cloudflare Worker: reads shop pages and images politely for Convex, and keeps images in R2. Not an npm workspace member; wrangler is its only dependency, pinned.",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "4.136.1"
+  }
+}

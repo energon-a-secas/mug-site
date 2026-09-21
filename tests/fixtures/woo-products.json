@@ -1,0 +1,44 @@
+[
+  {
+    "id": 42,
+    "name": "Hedwig 3D Mug &#8211; Ceramic",
+    "slug": "hedwig-3d-mug",
+    "permalink": "https://woo.example/product/hedwig-3d-mug/",
+    "sku": "WOO-HEDWIG",
+    "short_description": "<p>Owl head mug.</p>",
+    "description": "<p>A sculpted Hedwig mug. Not dishwasher safe.</p>",
+    "prices": { "price": "1895", "regular_price": "1895", "sale_price": "1895", "currency_code": "EUR", "currency_minor_unit": 2 },
+    "images": [ { "id": 7, "src": "https://woo.example/wp-content/uploads/hedwig.jpg", "thumbnail": "https://woo.example/wp-content/uploads/hedwig-150x150.jpg" } ],
+    "categories": [ { "id": 15, "name": "Mugs", "slug": "mugs" } ],
+    "tags": [ { "id": 3, "name": "Harry Potter", "slug": "harry-potter" } ],
+    "brands": [ { "id": 9, "name": "Wizarding World", "slug": "wizarding-world" } ],
+    "attributes": [
+      { "id": 1, "name": "Capacity", "taxonomy": "pa_capacity", "has_variations": false, "terms": [ { "id": 21, "name": "500 ml", "slug": "500-ml" } ] },
+      { "id": 2, "name": "Matière", "taxonomy": "pa_matiere", "has_variations": false, "terms": [ { "id": 22, "name": "Porcelaine", "slug": "porcelaine" } ] },
+      { "id": 3, "name": "EAN", "taxonomy": "pa_ean", "has_variations": false, "terms": [ { "id": 23, "name": "200000000004", "slug": "200000000004" } ] }
+    ],
+    "is_in_stock": true
+  },
+  {
+    "id": 43,
+    "name": "Hedwig Keychain",
+    "permalink": "https://woo.example/product/hedwig-keychain/",
+    "prices": { "price": "599", "currency_code": "EUR", "currency_minor_unit": 2 },
+    "images": [],
+    "categories": [ { "id": 16, "name": "Accessories", "slug": "accessories" } ],
+    "tags": [],
+    "attributes": [],
+    "is_in_stock": true
+  },
+  {
+    "id": 44,
+    "name": "Dobby Mug and Coaster Set",
+    "permalink": "https://woo.example/product/dobby-mug-coaster/",
+    "prices": { "price": "2400", "currency_code": "EUR", "currency_minor_unit": 2 },
+    "images": [],
+    "categories": [ { "id": 15, "name": "Mugs", "slug": "mugs" } ],
+    "tags": [],
+    "attributes": [],
+    "is_in_stock": false
+  }
+]

@@ -39,7 +39,7 @@ export const VERDICTS = Object.freeze(['yes', 'maybe', 'no']);
 export const LISTING_FIELDS = Object.freeze([
   'v', 'source', 'name', 'brand', 'franchise', 'character', 'style', 'capacityMl', 'material',
   'hasLid', 'dishwasherSafe', 'microwaveSafe', 'sku', 'gtin', 'price', 'available', 'images',
-  'description', 'tags', 'isMug', 'productType',
+  'description', 'tags', 'isMug', 'productType', 'vendor',
 ]);
 
 export const SOURCE_FIELDS = Object.freeze(['host', 'url', 'key', 'platform', 'via', 'fetchedAt']);
@@ -57,6 +57,7 @@ export const LIMITS = Object.freeze({
   tags: 30,
   tag: 40,
   productType: 80,
+  vendor: 80,
   reason: 120,
   capacityMinMl: 30,
   capacityMaxMl: 5000,

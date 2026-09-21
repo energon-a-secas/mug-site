@@ -1,0 +1,12 @@
+# Synthetic robots.txt for Mug's local fixture shop (tests/fixtures/shop).
+# Written for the Worker's local smoke test; no real shop publishes this file.
+
+User-agent: *
+Disallow: /cart
+Disallow: /checkout
+
+User-agent: MugBot
+Disallow: /private/
+Allow: /
+
+Sitemap: http://127.0.0.1:8899/sitemap.xml

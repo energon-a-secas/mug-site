@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<!-- Synthetic: a ProductGroup whose first variant carries the offer and the codes. -->
+<link rel="canonical" href="https://www.brand.example/stein/dragon-stein">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "schema:ProductGroup",
+  "name": "Dragon Relief Stein",
+  "productGroupID": "DRG-STEIN",
+  "brand": { "@type": "Brand", "name": "Brand Example" },
+  "material": "Stoneware",
+  "offers": { "@type": "AggregateOffer", "lowPrice": "10.00", "priceCurrency": "USD" },
+  "hasVariant": [
+    {
+      "@type": "Product",
+      "sku": "DRG-STEIN-RED",
+      "gtin13": "2000000000022",
+      "image": { "@type": "ImageObject", "contentUrl": "https://www.brand.example/img/stein-red.png" },
+      "offers": { "@type": "Offer", "price": 42, "priceCurrency": "USD", "availability": "https://schema.org/OutOfStock" }
+    },
+    { "@type": "Product", "sku": "DRG-STEIN-BLUE", "offers": { "@type": "Offer", "price": 44, "priceCurrency": "USD" } }
+  ],
+  "additionalProperty": [ { "@type": "PropertyValue", "name": "Volume", "value": 700, "unitCode": "MLT" } ]
+}
+</script>
+</head>
+<body></body>
+</html>

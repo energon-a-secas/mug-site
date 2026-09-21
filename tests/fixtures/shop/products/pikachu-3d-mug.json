@@ -1,0 +1,18 @@
+{
+  "product": {
+    "id": 9100000000001,
+    "title": "Pikachu 3D Mug",
+    "handle": "pikachu-3d-mug",
+    "body_html": "<p>A sculpted Pikachu head mug. <strong>Dishwasher safe.</strong> Capacity 460 ml.</p>",
+    "vendor": "ABYstyle",
+    "product_type": "Mugs",
+    "tags": "3d mug, pokemon",
+    "variants": [
+      { "id": 1, "title": "Default Title", "sku": "FIX-PIKA-001", "price": "18.95", "price_currency": "EUR", "barcode": "2000000000015" }
+    ],
+    "images": [
+      { "id": 11, "src": "http://127.0.0.1:8899/img/pikachu.png", "width": 6, "height": 4 }
+    ],
+    "image": { "id": 11, "src": "http://127.0.0.1:8899/img/pikachu.png" }
+  }
+}

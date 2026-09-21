@@ -1,0 +1,22 @@
+# mug-proxy: Mug's Cloudflare Worker (docs/CONTRACTS.md C3, C4, C10).
+# Routes, secrets, local development and deploying: worker/README.md.
+name = "mug-proxy"
+main = "src/index.js"
+compatibility_date = "2026-09-15"
+
+# Images, keyed by the SHA-256 of their bytes (C4.2). `wrangler dev` keeps a
+# local simulation of the bucket under .wrangler/ (gitignored); the preview
+# bucket is what `wrangler dev --remote` would use.
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "mug-images"
+preview_bucket_name = "mug-images-dev"
+
+# One secret, set out of band and never written into this file or the repo:
+#   npx wrangler secret put MUG_PROXY_TOKEN
+# Without it every POST, PUT and DELETE answers 501 NOT_CONFIGURED.
+#
+# Local development only, in worker/.dev.vars (gitignored), never deployed:
+#   MUG_PROXY_TOKEN=<any throwaway value>
+#   MUG_DEV_ALLOW_LOOPBACK=1   lets the SSRF guard reach 127.0.0.1 and localhost,
+#                              so a fixture shop can be scanned. Nothing else relaxes it.

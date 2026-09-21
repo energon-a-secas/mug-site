@@ -1,0 +1,71 @@
+{
+  "products": [
+    {
+      "id": 9100000000001,
+      "title": "Pikachu 3D Mug",
+      "handle": "pikachu-3d-mug",
+      "body_html": "<p>A sculpted Pikachu head mug. <strong>Dishwasher safe.</strong> Capacity 460 ml.</p>",
+      "vendor": "ABYstyle",
+      "product_type": "Mugs",
+      "tags": ["pokemon", "3d mug"],
+      "variants": [
+        { "id": 1, "title": "Default Title", "sku": "FIX-PIKA-001", "price": "18.95", "available": true }
+      ],
+      "images": [
+        { "id": 11, "src": "http://127.0.0.1:8899/img/pikachu.png", "width": 6, "height": 4 }
+      ]
+    },
+    {
+      "id": 9100000000002,
+      "title": "Star Wars Ewok 16 oz. Bas Relief Ceramic Mug",
+      "handle": "ewok-bas-relief-mug",
+      "body_html": "<p>Raised Ewok artwork on a ceramic body.</p>",
+      "vendor": "Star Wars",
+      "product_type": "Mug",
+      "tags": ["star wars", "ewok"],
+      "variants": [
+        { "id": 2, "title": "Default Title", "sku": "FIX-EWOK-016", "price": "24.00", "available": false }
+      ],
+      "images": []
+    },
+    {
+      "id": 9100000000003,
+      "title": "Taza 3D Kenny McCormick",
+      "handle": "taza-3d-kenny",
+      "body_html": "<p>Taza con forma de cabeza.</p>",
+      "vendor": "Fixture Ceramics",
+      "product_type": "Tazas",
+      "tags": "south park, tazas",
+      "variants": [
+        { "id": 3, "title": "Default Title", "sku": "FIX-KENNY-3D", "price": "21.50", "available": true }
+      ],
+      "images": []
+    },
+    {
+      "id": 9100000000004,
+      "title": "Pikachu Plush 30 cm",
+      "handle": "pikachu-plush",
+      "body_html": "<p>Soft toy.</p>",
+      "vendor": "ABYstyle",
+      "product_type": "Plush",
+      "tags": ["pokemon"],
+      "variants": [
+        { "id": 4, "title": "Default Title", "sku": "FIX-PLUSH-30", "price": "29.99", "available": true }
+      ],
+      "images": []
+    },
+    {
+      "id": 9100000000005,
+      "title": "Joker Coaster Set",
+      "handle": "joker-coaster-set",
+      "body_html": "<p>Four cork coasters.</p>",
+      "vendor": "ABYstyle",
+      "product_type": "Coasters",
+      "tags": ["dc comics"],
+      "variants": [
+        { "id": 5, "title": "Default Title", "sku": "FIX-COAST-4", "price": "9.99", "available": true }
+      ],
+      "images": []
+    }
+  ]
+}
