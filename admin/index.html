@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Mug">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="neo-mark" content="on">
+  <title>Admin | Mug</title>
+  <meta name="description" content="Review imported listings, scan shop feeds and keep the catalog tidy">
+  <meta property="og:title" content="Admin | Mug">
+  <meta property="og:description" content="Review imported listings, scan shop feeds and keep the catalog tidy">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mug.neorgon.com/admin/">
+  <meta property="og:site_name" content="Neorgon">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Admin | Mug">
+  <meta name="twitter:description" content="Review imported listings, scan shop feeds and keep the catalog tidy">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://mug.neorgon.com/admin/">
+  <meta property="og:locale" content="en_US">
+  <meta name="theme-color" content="#040714">
+  <meta property="og:image" content="https://mug.neorgon.com/og-preview.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Mug: character mugs, catalogued and collected">
+  <meta name="twitter:image" content="https://mug.neorgon.com/og-preview.jpg">
+  <!-- The Convex deployment the pages talk to. Empty until production exists;
+       on localhost, ?convex=http://127.0.0.1:3210 points a page at a dev backend (js/backend.js). -->
+  <meta name="neo-convex-url" content="">
+  <meta name="clerk-publishable-key" content="pk_live_Y2xlcmsubmVvcmdvbi5jb20k">
+  <meta name="neo-auth-site" content="Mug">
+  <!-- Fleet design tokens: canonical, do not redeclare locally (docs/references/new-project-context.md, Design) -->
+  <link rel="stylesheet" href="https://cdn.neorgon.org/v1.0.0/styles/base.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <!-- Neorgon Header Kit (vendored; ?header=live swaps CSS to CDN). Keep after style.css, the kit owns the header. -->
+  <script>(function(){var m=location.search.match(/[?&]theme=([\w-]+)/)||document.cookie.match(/(?:^|;\s*)neo_theme=([\w-]+)/);if(m&&m[1]!=='default')document.documentElement.dataset.theme=decodeURIComponent(m[1]);})();</script>
+  <link rel="stylesheet" href="/css/neorgon-header.css">
+  <link rel="stylesheet" href="/css/neorgon-themes.css">
+  <link rel="stylesheet" href="https://cdn.neorgon.org/v1.0.0/header/season.css">
+  <script defer src="/js/neorgon-header.js"></script>
+  <!-- Neorgon Footer Kit (vendored). See packages/neorgon-ui/footer/README.md. -->
+  <link rel="stylesheet" href="/css/neorgon-footer.css">
+  <script defer src="/js/neorgon-footer.js"></script>
+  <!-- Neorgon Auth Kit (vendored). Header slot, sign-in dialog and the Convex token. -->
+  <link rel="stylesheet" href="/css/neorgon-auth.css">
+  <!-- Neorgon Beacon Kit (vendored). Bottom-left correction reporter. -->
+  <meta name="beacon-site" content="mug-site">
+  <meta name="beacon" content="off">
+  <link rel="stylesheet" href="/css/neorgon-beacon.css">
+  <script defer src="/js/neorgon-beacon.js"></script>
+</head>
+<body data-page="admin">
+
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="header-bar" data-header-mode="app">
+    <div class="header-logo">
+      <a href="/" class="header-title-link">
+        <img src="https://cdn.neorgon.org/v1.0.0/energon-classic-logo.png" class="header-logo-img" alt="">
+        <div class="header-title-wrap">
+          <h1>Mug</h1>
+          <div class="header-subtitle">Character mugs, catalogued and collected</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="header-right">
+      <div class="header-actions">
+        <a class="btn btn--ghost btn--sm" href="/" data-keep-mobile>Catalog</a>
+        <a class="btn btn--ghost btn--sm" href="/shelf/" data-keep-mobile>My shelf</a>
+        <a class="btn btn--ghost btn--sm" href="/community/">Community</a>
+        <a class="btn btn--ghost btn--sm" href="/admin/" aria-current="page" id="adminLink" hidden>Admin</a>
+      </div>
+      <div class="neo-auth" data-neo-auth data-keep-mobile hidden></div>
+      <a class="header-home" href="https://neorgon.com/" title="neorgon.com" aria-label="Neorgon home">
+        <svg class="nh-hub-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 4.4 18.58 8.2 18.58 15.8 12 19.6 5.42 15.8 5.42 8.2Z" fill="currentColor" stroke="none"/>
+          <g class="nh-orbit">
+            <path d="M2.47 17.50 A11.0 11.0 0 0 1 14.85 1.37" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>
+            <path d="M21.53 6.50 A11.0 11.0 0 0 1 9.15 22.63" fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round"/>
+            <circle cx="21.71" cy="6.84" r="1.25" fill="currentColor"/>
+            <circle cx="2.29" cy="17.16" r="1.25" fill="currentColor"/>
+          </g>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap stack" id="adminGate" aria-busy="true">
+      <h2 class="section__title">Catalogue admin</h2>
+      <div class="skeleton admin-skeleton" aria-hidden="true"></div>
+    </div>
+    <div class="shell shell--admin" id="adminShell" hidden>
+      <nav class="shell__rail admin-rail" id="adminRail" aria-label="Admin sections">
+        <a href="#overview" data-section="overview">Overview</a>
+        <a href="#review" data-section="review">Review<span class="admin-count" data-count="review" hidden></span></a>
+        <a href="#import" data-section="import">Import</a>
+        <a href="#sources" data-section="sources">Sources</a>
+        <a href="#runs" data-section="runs">Runs<span class="admin-count" data-count="runs" hidden></span></a>
+        <a href="#catalog" data-section="catalog">Catalog</a>
+        <a href="#images" data-section="images">Images<span class="admin-count" data-count="images" hidden></span></a>
+        <a href="#community" data-section="community">Community<span class="admin-count" data-count="community" hidden></span></a>
+        <a href="#runner" data-section="runner">Runner<span class="admin-count" data-count="runner" hidden></span></a>
+      </nav>
+      <div class="shell__main" id="adminMain"></div>
+    </div>
+    <p class="visually-hidden" id="adminLive" role="status" aria-live="polite" aria-atomic="true"></p>
+  </main>
+
+  <footer class="neo-footer" data-footer-mode="minimal">
+    Product facts and photos belong to their makers, and every mug links back to the shop it came from. <a href="/bot/">About MugBot</a>
+  </footer>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

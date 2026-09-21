@@ -1,0 +1,21 @@
+  <main id="main">
+    <div class="wrap stack" id="adminGate" aria-busy="true">
+      <h2 class="section__title">Catalogue admin</h2>
+      <div class="skeleton admin-skeleton" aria-hidden="true"></div>
+    </div>
+    <div class="shell shell--admin" id="adminShell" hidden>
+      <nav class="shell__rail admin-rail" id="adminRail" aria-label="Admin sections">
+        <a href="#overview" data-section="overview">Overview</a>
+        <a href="#review" data-section="review">Review<span class="admin-count" data-count="review" hidden></span></a>
+        <a href="#import" data-section="import">Import</a>
+        <a href="#sources" data-section="sources">Sources</a>
+        <a href="#runs" data-section="runs">Runs<span class="admin-count" data-count="runs" hidden></span></a>
+        <a href="#catalog" data-section="catalog">Catalog</a>
+        <a href="#images" data-section="images">Images<span class="admin-count" data-count="images" hidden></span></a>
+        <a href="#community" data-section="community">Community<span class="admin-count" data-count="community" hidden></span></a>
+        <a href="#runner" data-section="runner">Runner<span class="admin-count" data-count="runner" hidden></span></a>
+      </nav>
+      <div class="shell__main" id="adminMain"></div>
+    </div>
+    <p class="visually-hidden" id="adminLive" role="status" aria-live="polite" aria-atomic="true"></p>
+  </main>
