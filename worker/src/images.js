@@ -70,7 +70,8 @@ export async function mirrorImage({ url }, ctx, bucket) {
 
 /** C3 PUT /v1/images/put?kind=: raw bytes from Convex (a browser-made thumbnail or photo, or an admin upload). */
 export async function putImage(request, kind, bucket) {
-  const prefix = KIND_PREFIX[kind];
+  // Own keys only: kind=constructor would otherwise read Object's prototype.
+  const prefix = Object.hasOwn(KIND_PREFIX, kind) ? KIND_PREFIX[kind] : null;
   if (!prefix) return envelope('BAD_REQUEST', '`kind` has to be thumb, photo or original.');
   const declared = Number(request.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > IMAGE_CAP) return envelope('TOO_LARGE', `The image is over the ${IMAGE_CAP}-byte cap.`);

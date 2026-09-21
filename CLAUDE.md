@@ -66,6 +66,13 @@ shops (robots.txt `Disallow: /`). Those enter by paste or by hand. Neither the
 Worker nor the runner ever presents a browser User-Agent or skips robots.txt;
 do not add an option that does.
 
+**The extractors must stay linear on hostile pages.** No lazy `[\s\S]*?` across a
+document (find the opening, then search forward for the close, and stop when none is
+left), no tag or quoted value that may run past a `<`, no `push(...bigArray)`, no
+unbounded recursion into page JSON. Each of those once cost hours of CPU or threw on a
+single crafted page; `tests/hostile.test.mjs` holds 200 KB inputs to a 2 s budget and
+fails on any of them.
+
 **R2 keys are content addresses** (`o/<sha256>.<ext>`), so two mugs can share
 one object. Hiding a mug never deletes R2 objects; `images:forget` deletes
 only Convex files.

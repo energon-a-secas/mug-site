@@ -3,7 +3,7 @@
   <url><loc>http://127.0.0.1:8899/</loc></url>
   <url>
     <loc>http://127.0.0.1:8899/product/luna-teapot.html</loc>
-    <image:image><image:loc>http://127.0.0.1:8899/img/pikachu.png</image:loc></image:image>
+    <image:image><image:loc>https://shop.example/img/pikachu.png</image:loc></image:image>
   </url>
   <url><loc><![CDATA[http://127.0.0.1:8899/products/pikachu-3d-mug]]></loc></url>
   <url><loc>http://127.0.0.1:8899/pages/about</loc></url>

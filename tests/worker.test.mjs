@@ -173,6 +173,9 @@ test('request shapes: BAD_REQUEST, with an Allow header for a wrong method', asy
     await post('/v1/discover', { adapter: 'shopify', url: 'https://shop.example/', include: 'mug' }),
     await post('/v1/discover', { adapter: 'shopify', url: 'https://shop.example/', exclude: [1] }),
     await call('PUT', '/v1/images/put?kind=poster', { raw: PNG }),
+    // Own keys only: an inherited name once stored an object under a junk key.
+    await call('PUT', '/v1/images/put?kind=constructor', { raw: PNG }),
+    await call('PUT', '/v1/images/put?kind=__proto__', { raw: PNG }),
     await call('DELETE', '/v1/images/not-a-key'),
   ];
   for (const { res, json } of cases) assert.deepEqual([res.status, json.code], [400, 'BAD_REQUEST'], JSON.stringify(json));

@@ -358,6 +358,10 @@ export async function politeFetch(rawUrl, options = {}) {
       if (String(headers.get('cf-mitigated') || '').toLowerCase() === 'challenge' || BLOCKING_STATUSES.has(status)) {
         const peek = await readCapped(res.body, PEEK_BYTES, { truncate: true });
         const sign = detectChallenge({ headers, text: decodeText(peek.bytes, headers.get('content-type')), strict: false });
+        // A15: a plain 429 asks MugBot to slow down. The runner would only ask
+        // again from another address, so it is an ordinary upstream error,
+        // retried once later; a 429 carrying a challenge is still a block.
+        if (status === 429 && !sign) return failure('UPSTREAM_ERROR', blockedMessage(url.href, status, null), { upstreamStatus: status, url: url.href });
         return failure('UPSTREAM_BLOCKED', blockedMessage(url.href, status, sign), { hint: BLOCKED_HINT, upstreamStatus: status, url: url.href });
       }
       if (status < 200 || status > 299) {

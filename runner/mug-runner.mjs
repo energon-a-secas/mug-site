@@ -69,6 +69,16 @@ export class RunnerError extends Error {
   }
 }
 
+/**
+ * Text as it may reach a terminal. Product names, shop messages and URLs are
+ * printed here, and a control character in them is a terminal command (OSC
+ * 52 writes the clipboard in some terminals), so every one except newline
+ * and tab is shown as "?".
+ */
+export function printable(text) {
+  return String(text).replace(/\p{Cc}/gu, (c) => (c === '\n' || c === '\t' ? c : '?'));
+}
+
 // ── Configuration ────────────────────────────────────────────────────────────
 
 /** KEY=VALUE lines; blank lines, # comments and an `export ` prefix are allowed, quotes are stripped. */
@@ -376,17 +386,46 @@ export async function drain({ limit = DEFAULT_LIMIT, dry = false } = {}, deps) {
     if (!item || typeof item.url !== 'string') {
       summary.skipped++;
       deps.log(`${tag} skipped: the item has no URL`);
-    } else if (item.kind === 'page') await drainPage(item, tag, deps, dry, summary);
-    else if (item.kind === 'image') await drainImage(item, tag, deps, dry, summary);
-    else {
+      continue;
+    }
+    if (item.kind !== 'page' && item.kind !== 'image') {
       summary.skipped++;
       deps.log(`${tag} skipped: unknown kind ${JSON.stringify(item.kind)}`);
+      continue;
+    }
+    try {
+      if (item.kind === 'page') await drainPage(item, tag, deps, dry, summary);
+      else await drainImage(item, tag, deps, dry, summary);
+    } catch (err) {
+      // A RunnerError is about Convex (unreachable, token refused): stop.
+      // Anything else is this item, and the queue is oldest first, so an item
+      // that throws would otherwise end this drain and every later one.
+      if (err instanceof RunnerError) throw err;
+      const failure = { code: 'INTERNAL', message: `mug-runner could not handle it: ${String((err && err.message) || err).slice(0, 200)}` };
+      deps.log(`${tag} ${item.kind} ${item.url}\n        ${failure.code}: ${failure.message}`);
+      summary[item.kind === 'page' ? 'pages' : 'images'].failed++;
+      count(summary, failure.code);
+      await reportFailure(deps, item, failure, dry);
     }
   }
   return summary;
 }
 
 // ── scan ─────────────────────────────────────────────────────────────────────
+
+/**
+ * The step's answer, or { ok: false, code: "INTERNAL" } when it throws on
+ * something a shop sent. RunnerErrors (Convex unreachable, token refused)
+ * still end the run.
+ */
+async function isolated(step) {
+  try {
+    return await step();
+  } catch (err) {
+    if (err instanceof RunnerError) throw err;
+    return { ok: false, code: 'INTERNAL', message: `mug-runner could not handle it: ${String((err && err.message) || err).slice(0, 200)}` };
+  }
+}
 
 /**
  * C8 scan: POST /runner/scan, discover the source's entry URLs exactly as the
@@ -434,7 +473,7 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
         }
         pagesLeft--;
         summary.pages++;
-        const found = await discover(args, ctx);
+        const found = await isolated(() => discover(args, ctx));
         if (!found.ok) {
           count(summary, found.code);
           deps.log(`  page ${page} of ${entry}: ${found.code}: ${found.message}`);
@@ -446,10 +485,10 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
         deps.log(`  page ${page} of ${entry}: ${listings.length ? `${listings.length} listing(s)` : `${urls.length} URL(s)`}, ${found.skipped || 0} skipped`);
         summary.listings += listings.length;
         summary.urls += urls.length;
-        pending.push(...listings);
+        for (const listing of listings) pending.push(listing);
         await flush(false);
         for (const productUrl of urls) {
-          const got = await extract({ url: productUrl, brand, currency }, ctx);
+          const got = await isolated(() => extract({ url: productUrl, brand, currency }, ctx));
           if (got.ok) {
             summary.extracted++;
             pending.push(got.listing);
@@ -468,6 +507,15 @@ export async function scan(sourceSlug, { maxPages = MAX_SCAN_PAGES } = {}, deps)
   } catch (err) {
     failure = err;
     errors.push(String((err && err.message) || err));
+    // Stage what was already read: a failure late in a scan should not throw
+    // away the listings extracted before it.
+    if (pending.length && !(err instanceof RunnerError && err.kind === 'config')) {
+      try {
+        await flush(true);
+      } catch (again) {
+        errors.push(String((again && again.message) || again));
+      }
+    }
   }
   const error = errors.length ? errors.join(' | ').slice(0, 500) : undefined;
   await deps.convex.post('/runner/finish', error ? { runId, error } : { runId });
@@ -536,7 +584,7 @@ export async function main(argv, { env = process.env, out = (s) => process.stdou
     return 2;
   }
   const { site, token } = loaded.config;
-  const redact = (s) => String(s).split(token).join('mugr_[redacted]');
+  const redact = (s) => printable(String(s).split(token).join('mugr_[redacted]'));
   const log = (s) => out(redact(s));
   const fetchConvex = convexFetch || ((u, i) => globalThis.fetch(u, i));
   const deps = {

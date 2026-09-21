@@ -12,9 +12,14 @@ export function fold(text) {
   return String(text ?? '').normalize('NFKD').replace(DIACRITICS, '').toLowerCase();
 }
 
-/** Whitespace collapsed and trimmed; never returns anything but a string. */
+// C0 and C1 control characters. Shop text reaches pages and the runner's
+// terminal, where ESC and BEL are commands rather than text, and none of them
+// is ever part of a product's name.
+const CONTROL = /\p{Cc}/gu;
+
+/** Whitespace collapsed, control characters dropped, trimmed; never returns anything but a string. */
 export function collapse(text) {
-  return String(text ?? '').replace(/\s+/g, ' ').trim();
+  return String(text ?? '').replace(CONTROL, ' ').replace(/\s+/g, ' ').trim();
 }
 
 export function slugify(text, max = 80) {

@@ -124,7 +124,7 @@ The key is what makes a re-scan update a mug instead of duplicating it.
 |---|---|
 | shopify | `<host>/products/<handle>` |
 | woocommerce | `<host>/p/<id>` (the Store API numeric id) |
-| jsonld, opengraph | the canonical URL (`link rel=canonical`, else `og:url`, else the fetched URL) as `<host><path>`, lowercase host without `www.`, no query, no hash, no trailing slash |
+| jsonld, opengraph | the canonical URL (`link rel=canonical`, else `og:url`, else the fetched URL) as `<host><path>`, lowercase host without `www.`, no query, no hash, no trailing slash; a canonical on another host is ignored and the fetched URL is used (A14) |
 | paste | `amazon:<ASIN>` when the URL carries one, else `paste:<nameKey>` |
 | manual | `manual:<nameKey>:<brand slug or "-">` |
 
@@ -186,8 +186,8 @@ runtime's HTML 500 page.
 | `BAD_REQUEST` | 400 | body shape wrong | bug, mark the item failed |
 | `URL_NOT_ALLOWED` | 400 | failed the SSRF guard (C10.3) | mark failed |
 | `ROBOTS_DISALLOWED` | 403 | the shop's robots.txt refuses MugBot for that path | mark failed with reason `robots`, never retried, never sent to the runner |
-| `UPSTREAM_BLOCKED` | 502 | shop answered 401, 403, 429, 503, or a bot challenge page | send to the runner queue (`needsLocal`) |
-| `UPSTREAM_ERROR` | 502 | any other non-2xx, or unparseable body | retry once later, then failed |
+| `UPSTREAM_BLOCKED` | 502 | shop answered 401, 403 or 503, or a bot challenge page (a 429 only with a challenge, A15) | send to the runner queue (`needsLocal`) |
+| `UPSTREAM_ERROR` | 502 | any other non-2xx including a plain 429 (A15), or unparseable body | retry once later, then failed |
 | `UPSTREAM_TIMEOUT` | 504 | no answer in 15 s | retry once later, then failed |
 | `TOO_LARGE` | 413 | body over the cap (C10.4) | failed |
 | `NOT_A_PRODUCT` | 422 | page read, no product data in it | failed with reason `no-product` |
@@ -357,8 +357,8 @@ is never enough.
 1. **User-Agent** `MugBot/1.0 (+https://mug.neorgon.com/bot/)`, always. Neither the Worker
    nor the runner ever presents itself as a browser.
 2. **robots.txt** is read before the first fetch on a host, cached for an hour, and obeyed
-   for the `mugbot` group, else `*`. A 4xx robots file means allowed; 5xx or a timeout
-   means disallowed for now (RFC 9309). A disallowed path is `ROBOTS_DISALLOWED` everywhere,
+   for the `mugbot` group, else `*`. A 4xx robots file means allowed; 5xx, 429 (A15) or a
+   timeout means disallowed for now (RFC 9309). A disallowed path is `ROBOTS_DISALLOWED` everywhere,
    including the runner.
 3. **SSRF guard**: `https` or `http` only, default ports only, no IP literals in private,
    loopback, link-local or CGNAT ranges, no `localhost`, `*.local`, `*.internal`,
@@ -467,3 +467,20 @@ optional `currency` and hand it to the Shopify extractor, and `/runner/scan` ret
 the change the same 47 listings all carried USD prices. A thumbnail mirrored from a Shopify
 CDN's own 480 px copy (A5) is stored like any mirrored image, so its key starts `o/`; `t/` is
 for thumbnails the admin's browser makes.
+
+**A14 (2026-09-21, from the security review).** A page names its own identity only on its own
+host. C1.2's canonical URL sets `source.url` and the key only when its host matches the fetched
+host (without `www.`); otherwise both are the fetched URL. A page on another shop could
+otherwise name `abystyle.com/products/pikachu-3d-mug` as its canonical, take that key, and be
+offered as an update to ABYstyle's mug. The same rule holds for a WooCommerce `permalink`
+(else `<base>/?p=<id>`), which is the public shop link (C11). A listing's `images` keep only
+URLs the C10.3 guard accepts, because the admin's Review page renders them as `<img>`, and
+every text field has C0 and C1 control characters removed (a description keeps its newlines).
+
+**A15 (2026-09-21, from the security review).** A 429 asks MugBot to slow down, so it is never
+a reason to ask again from another address. A robots.txt answering 429 is read like a 5xx:
+disallowed for now and retryable (A12). A page answering a plain 429 is `UPSTREAM_ERROR`,
+retried once later and then failed; only a 429 carrying a bot challenge is `UPSTREAM_BLOCKED`
+and goes to the runner. An extractor that throws on a hostile page answers `NOT_A_PRODUCT`
+rather than `INTERNAL`, since a retry would read the same bytes, and the runner records an item
+that throws as `INTERNAL` and moves on to the next one.

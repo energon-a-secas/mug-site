@@ -137,7 +137,7 @@ test('the guard runs before anything is fetched', async () => {
 });
 
 test('refusals and bot challenges are UPSTREAM_BLOCKED', async () => {
-  for (const status of [401, 403, 429, 503]) {
+  for (const status of [401, 403, 503]) {
     const web = shop({ 'https://shop.example/products/mug': { status, body: 'no' } });
     const r = await politeFetch('https://shop.example/products/mug', { fetchImpl: web, robotsCache: new Map() });
     assert.equal(r.code, 'UPSTREAM_BLOCKED', `status ${status}`);
@@ -160,6 +160,19 @@ test('refusals and bot challenges are UPSTREAM_BLOCKED', async () => {
 
   const akamai = shop({ 'https://shop.example/products/mug': { status: 403, body: '<html><title>Access Denied</title>Reference #18.abc</html>', headers: { server: 'AkamaiGHost' } } });
   assert.match((await politeFetch('https://shop.example/products/mug', { fetchImpl: akamai, robotsCache: new Map() })).message, /Akamai/);
+});
+
+test('A15: a plain 429 is an upstream error retried later, never sent to the runner; with a challenge it is a block', async () => {
+  const plain = shop({ 'https://shop.example/products/mug': { status: 429, body: 'slow down' } });
+  const r = await politeFetch('https://shop.example/products/mug', { fetchImpl: plain, robotsCache: new Map() });
+  assert.equal(r.code, 'UPSTREAM_ERROR');
+  assert.equal(r.upstreamStatus, 429);
+  assert.match(r.message, /too many requests/);
+  assert.equal(r.hint, undefined, 'no hint pointing at the runner');
+  const challenged = shop({ 'https://shop.example/products/mug': { status: 429, body: 'x', headers: { 'cf-mitigated': 'challenge' } } });
+  const c = await politeFetch('https://shop.example/products/mug', { fetchImpl: challenged, robotsCache: new Map() });
+  assert.equal(c.code, 'UPSTREAM_BLOCKED');
+  assert.match(c.message, /Cloudflare challenge/);
 });
 
 test('an ordinary page that mentions a vendor is not a block', async () => {

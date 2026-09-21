@@ -181,6 +181,9 @@ export function checkUrl(raw, { env } = {}) {
   if (url.username || url.password) return deny('A URL carrying a user name or password is refused.');
   const host = url.hostname.toLowerCase().replace(/\.$/, '');
   if (!host) return deny('The URL has no host.');
+  // One trailing dot is the DNS root and is allowed; "localhost.." has an
+  // empty label, and stripping only one dot let it past the name checks.
+  if (host.split('.').includes('')) return deny(`${host} has an empty label.`);
   if (devLoopback(env) && LOOPBACK_NAMES.has(host)) return { ok: true, url };
   if (url.port) return deny(`Only default ports are fetched, and this URL asks for :${url.port}.`);
   const v4 = parseIPv4(host);

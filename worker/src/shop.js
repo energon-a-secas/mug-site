@@ -115,6 +115,17 @@ export function validateDiscover(body) {
   return { ok: true, adapter: body.adapter, url: base.url, page, include: include.words, exclude: exclude.words, brand: base.brand, currency: base.currency };
 }
 
+// An extractor that throws on a hostile page answers like one that found
+// nothing: the Worker then says NOT_A_PRODUCT, which is final, rather than
+// INTERNAL, which Convex retries, and a runner scan moves on to the next URL.
+function guarded(read) {
+  try {
+    return read();
+  } catch (err) {
+    return { ok: false, code: 'unreadable', message: `the extractor could not read it: ${String((err && err.message) || err).slice(0, 80)}` };
+  }
+}
+
 // ── probe ────────────────────────────────────────────────────────────────────
 
 const HARD_FAILURES = ['UPSTREAM_BLOCKED', 'UPSTREAM_TIMEOUT'];
@@ -190,7 +201,7 @@ async function discoverShopify({ url, page, include, exclude, brand, currency },
   if (!products) return fail('UPSTREAM_ERROR', `${hostOf(got.url)} did not answer with a Shopify products feed.`, { upstreamStatus: got.status });
   const baseUrl = shopifyBase(url);
   const now = clock(ctx);
-  const { listings, skipped } = keepListings(products.map((p) => fromShopifyProduct(p, { baseUrl, via: ctx.via, now, brand, currency })), { include, exclude });
+  const { listings, skipped } = keepListings(products.map((p) => guarded(() => fromShopifyProduct(p, { baseUrl, via: ctx.via, now, brand, currency }))), { include, exclude });
   return { ok: true, listings, skipped, next: products.length >= FEED_PAGE_SIZE ? { page: page + 1 } : null, fetched: fetchedOf(got) };
 }
 
@@ -202,7 +213,7 @@ async function discoverWoo({ url, page, include, exclude, brand }, ctx) {
   if (!Array.isArray(data.value)) return fail('UPSTREAM_ERROR', `${hostOf(got.url)} did not answer with a WooCommerce Store API product list.`, { upstreamStatus: got.status });
   const baseUrl = new URL(url).origin;
   const now = clock(ctx);
-  const { listings, skipped } = keepListings(data.value.map((p) => fromWooProduct(p, { baseUrl, via: ctx.via, now, brand })), { include, exclude });
+  const { listings, skipped } = keepListings(data.value.map((p) => guarded(() => fromWooProduct(p, { baseUrl, via: ctx.via, now, brand }))), { include, exclude });
   const totalPages = Number(got.headers && got.headers.get('x-wp-totalpages'));
   const more = Number.isInteger(totalPages) && totalPages > 0 ? page < totalPages : data.value.length >= FEED_PAGE_SIZE;
   return { ok: true, listings, skipped, next: more ? { page: page + 1 } : null, fetched: fetchedOf(got) };
@@ -324,7 +335,7 @@ export async function extract({ url, brand, currency }, ctx) {
       const data = parseJson(got);
       const product = data.ok && data.value && typeof data.value === 'object' ? data.value.product : null;
       if (product && typeof product === 'object') {
-        const r = fromShopifyProduct(product, { baseUrl: shopifyBase(checked.url.href), via: ctx.via, now, brand, currency });
+        const r = guarded(() => fromShopifyProduct(product, { baseUrl: shopifyBase(checked.url.href), via: ctx.via, now, brand, currency }));
         if (r.ok) return { ok: true, listing: r.listing, fetched: fetchedOf(got) };
       }
     } else if (STOP_AFTER_JSON.includes(got.code)) {
@@ -333,7 +344,7 @@ export async function extract({ url, brand, currency }, ctx) {
   }
   const page = await politeFetch(checked.url.href, net(ctx, { kind: 'page' }));
   if (!page.ok) return page;
-  const r = fromHtml(decodeText(page.body, page.contentType), { url: page.url, via: ctx.via, now, brand });
+  const r = guarded(() => fromHtml(decodeText(page.body, page.contentType), { url: page.url, via: ctx.via, now, brand }));
   if (!r.ok) {
     return fail('NOT_A_PRODUCT', `${hostOf(page.url)} answered, but the page carries no product data (${r.message})`, {
       hint: 'Mug reads JSON-LD Product and OpenGraph product tags; a page with neither can be pasted by hand.',

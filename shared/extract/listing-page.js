@@ -130,17 +130,42 @@ export function nextPageUrl(html, { url } = {}) {
   return null;
 }
 
+/**
+ * The contents of each <tag>...</tag> (or <prefix:tag>), found with forward
+ * searches only. A lazy [\s\S]*? up to the closing tag rescanned the rest of
+ * the document for every unclosed opening tag, so a sitemap of repeated
+ * "<url>" cost quadratic time. With no closing tag left, no later element
+ * can close either, so the scan stops. `skipPrefixes` passes over openings
+ * like <image:loc>; `first` stops at the first element.
+ */
+function elements(xml, tag, { skipPrefixes = [], first = false } = {}) {
+  const text = String(xml ?? '');
+  const open = new RegExp(`<(?:([\\w-]+):)?${tag}\\b[^<>]*>`, 'gi');
+  const close = new RegExp(`</(?:[\\w-]+:)?${tag}\\s*>`, 'gi');
+  const out = [];
+  for (let m = open.exec(text); m; m = open.exec(text)) {
+    if (m[1] && skipPrefixes.includes(m[1].toLowerCase())) continue;
+    close.lastIndex = open.lastIndex;
+    const end = close.exec(text);
+    if (!end) break;
+    out.push(text.slice(open.lastIndex, end.index));
+    if (first) break;
+    open.lastIndex = close.lastIndex;
+  }
+  return out;
+}
+
 function blocks(xml, tag) {
-  return [...String(xml).matchAll(new RegExp(`<(?:[\\w-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)</(?:[\\w-]+:)?${tag}\\s*>`, 'gi'))].map((m) => m[1]);
+  return elements(xml, tag);
 }
 
 // <loc>, or a prefixed <sm:loc>, but never <image:loc> or <video:loc>.
-const LOC = /<(?:(?!image:|video:|news:|xhtml:)[\w-]+:)?loc\b[^>]*>([\s\S]*?)<\/(?:[\w-]+:)?loc\s*>/i;
+const MEDIA_PREFIXES = ['image', 'video', 'news', 'xhtml'];
 
 function locOf(block) {
-  const m = LOC.exec(block);
-  if (!m) return null;
-  const raw = m[1].replace(/^\s*<!\[CDATA\[/, '').replace(/\]\]>\s*$/, '').trim();
+  const [inner] = elements(block, 'loc', { skipPrefixes: MEDIA_PREFIXES, first: true });
+  if (inner === undefined) return null;
+  const raw = inner.replace(/^\s*<!\[CDATA\[/, '').replace(/\]\]>\s*$/, '').trim();
   return raw ? decodeAttr(raw) : null;
 }
 

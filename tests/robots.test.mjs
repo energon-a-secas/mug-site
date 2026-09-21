@@ -134,12 +134,14 @@ test('a hostile pattern cannot make the matcher crawl', () => {
   assert.ok(performance.now() - started < 200, 'linear, not backtracking');
 });
 
-test('fetch outcomes: 4xx allows, 5xx and timeouts disallow for now, /robots.txt is always allowed', () => {
+test('fetch outcomes: 4xx allows, 5xx, 429 and timeouts disallow for now, /robots.txt is always allowed', () => {
   const missing = robotsPolicy({ status: 404 });
   assert.equal(robotsVerdict(missing, at('/anything')).allowed, true);
   assert.match(robotsVerdict(missing, at('/anything')).rule, /404/);
   assert.equal(robotsVerdict(robotsPolicy({ status: 403 }), at('/x')).allowed, true, 'a refused robots.txt is "unavailable": allowed');
-  assert.equal(robotsVerdict(robotsPolicy({ status: 429 }), at('/x')).allowed, true, '429 is a 4xx under RFC 9309');
+  const slow = robotsPolicy({ status: 429 });
+  assert.equal(robotsVerdict(slow, at('/x')).allowed, false, 'A15: 429 says slow down, so it is read like a 5xx');
+  assert.equal(slow.kind, 'disallow-all', 'and so comes back retryable (A12)');
   const down = robotsPolicy({ status: 503 });
   assert.equal(robotsVerdict(down, at('/x')).allowed, false);
   assert.match(robotsVerdict(down, at('/x')).rule, /503.*for now/);

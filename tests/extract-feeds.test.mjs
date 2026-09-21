@@ -32,7 +32,7 @@ test('shopify: a products.json item becomes a listing keyed <host>/products/<han
   assert.equal(l.price, undefined, 'products.json names no currency, so no price is invented');
   assert.equal(l.available, true);
   assert.equal(l.gtin, undefined, 'products.json carries no barcode');
-  assert.deepEqual(l.images, ['https://127.0.0.1:8899/img/pikachu.png']);
+  assert.deepEqual(l.images, ['https://shop.example/img/pikachu.png']);
   assert.deepEqual(l.tags, ['pokemon', '3d mug']);
   assert.equal(l.productType, 'Mugs');
   assert.equal(l.style, 'sculpted');

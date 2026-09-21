@@ -13,6 +13,7 @@ import {
   mugVerdict, parseCapacityMl,
 } from './facts.js';
 import { cleanName, collapse, fold, nameKey, normalizeGtin, slugify } from './names.js';
+import { checkUrl } from '../net/guard.js';
 
 function fail(code, message) {
   return { ok: false, code, message };
@@ -92,21 +93,53 @@ function decodeEntities(text) {
       if (code === 0x2014) return ',';
       return String.fromCodePoint(code);
     }
-    const named = ENTITIES[body.toLowerCase()];
-    return named === undefined ? whole : named;
+    // Own keys only: "&constructor;" is not an entity, it is Object's prototype.
+    const key = body.toLowerCase();
+    return Object.hasOwn(ENTITIES, key) ? ENTITIES[key] : whole;
   });
+}
+
+const RAW_OPEN = /<(script|style|noscript)\b/gi;
+const RAW_CLOSE = {
+  script: /<\/script\s*>/gi,
+  style: /<\/style\s*>/gi,
+  noscript: /<\/noscript\s*>/gi,
+};
+
+// Script, style and noscript blocks dropped with two forward searches. A lazy
+// [\s\S]*? across the document rescanned to the end once per unclosed tag, so
+// a page of repeated "<script" cost quadratic time. An unclosed block runs to
+// the end of the text, which is also how a browser reads it.
+function dropRawBlocks(html) {
+  let out = '';
+  let from = 0;
+  RAW_OPEN.lastIndex = 0;
+  for (let open = RAW_OPEN.exec(html); open; open = RAW_OPEN.exec(html)) {
+    out += `${html.slice(from, open.index)} `;
+    const close = RAW_CLOSE[open[1].toLowerCase()];
+    close.lastIndex = RAW_OPEN.lastIndex;
+    const end = close.exec(html);
+    if (!end) return out;
+    from = close.lastIndex;
+    RAW_OPEN.lastIndex = from;
+  }
+  return out + html.slice(from);
 }
 
 /** Plain text from shop HTML: scripts and styles dropped, tags to spaces, entities decoded. */
 export function plainText(html) {
-  const text = String(html ?? '')
-    .replace(/<(script|style|noscript)\b[\s\S]*?<\/\1>/gi, ' ')
+  // Every pattern here is linear: a tag stops at the next "<" (a run of
+  // unclosed "<" made /<[^>]*>/ quadratic), and whitespace other than a
+  // newline is folded before the newline pass, so no run is scanned twice.
+  const text = dropRawBlocks(String(html ?? ''))
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/(p|li|div|h[1-6])>/gi, '\n')
-    .replace(/<[^>]*>/g, ' ');
+    .replace(/<[^<>]*>/g, ' ');
   return decodeEntities(text)
     .replace(EM_DASH, ',')
-    .replace(/[ \t\f\v]+/g, ' ')
+    .replace(/\r\n?/g, '\n')
+    .replace(/\p{Cc}/gu, (c) => (c === '\n' ? c : ' '))
+    .replace(/[^\S\n]+/g, ' ')
     .replace(/\s*\n\s*/g, '\n')
     .trim();
 }
@@ -130,12 +163,15 @@ function price(value) {
   return { amount: Math.round(amount * 100) / 100, currency };
 }
 
+// Only images the SSRF guard (C10.3) would fetch: the admin's Review page
+// renders them as <img>, and one on 192.168.1.1 would have the admin's own
+// browser send requests into their network.
 function images(list, base) {
   const out = [];
   const seen = new Set();
   for (const raw of Array.isArray(list) ? list : []) {
     const url = canonicalUrl(typeof raw === 'string' ? raw : raw && raw.src, base);
-    if (!url || seen.has(url)) continue;
+    if (!url || seen.has(url) || !checkUrl(url).ok) continue;
     seen.add(url);
     out.push(url);
     if (out.length >= LIMITS.images) break;

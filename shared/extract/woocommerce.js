@@ -8,7 +8,7 @@
 
 import { detectMaterial, parseCapacityMl } from './facts.js';
 import { fold } from './names.js';
-import { listingKey, normalizeListing } from './normalize.js';
+import { hostOf, listingKey, normalizeListing } from './normalize.js';
 import { brandFields } from './opengraph.js';
 
 /**
@@ -67,7 +67,11 @@ export function fromWooProduct(product, { baseUrl, via = 'worker', now = Date.no
     return { ok: false, code: 'bad-source', message: 'The WooCommerce product has no numeric id.' };
   }
   const base = String(baseUrl || '').replace(/\/+$/, '');
-  const permalink = typeof product.permalink === 'string' && /^https?:\/\//i.test(product.permalink) ? product.permalink : `${base}/?p=${id}`;
+  // A14: the shop's own permalink only when it is on the shop's host. It is
+  // the public "buy it here" link (C11), so another host would be the shop's
+  // feed choosing where visitors are sent.
+  const offered = typeof product.permalink === 'string' && /^https?:\/\//i.test(product.permalink) ? product.permalink : '';
+  const permalink = offered && hostOf(offered) && hostOf(offered) === hostOf(base) ? offered : `${base}/?p=${id}`;
   const capacityText = attributeText(product.attributes, CAPACITY_ATTR);
   const materialText = attributeText(product.attributes, MATERIAL_ATTR);
   const shopBrand = names(product.brands)[0] || attributeText(product.attributes, BRAND_ATTR);

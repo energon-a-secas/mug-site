@@ -24,8 +24,8 @@ export function decodeAttr(value) {
       if (!Number.isFinite(code) || code < 32 || code > 0x10ffff) return ' ';
       return code === EM_DASH_CODE ? ',' : String.fromCodePoint(code);
     }
-    const named = NAMED[body.toLowerCase()];
-    return named === undefined ? whole : named;
+    const key = body.toLowerCase();
+    return Object.hasOwn(NAMED, key) ? NAMED[key] : whole;
   });
 }
 
@@ -42,9 +42,15 @@ export function tagAttributes(inside) {
   return out;
 }
 
-/** The attributes of every <tag ...> in the document, in order. */
+/**
+ * The attributes of every <tag ...> in the document, in order. Neither the
+ * tag nor a quoted value may run past a "<": without that, each unclosed
+ * "<meta " rescanned the rest of the page and a hostile page cost quadratic
+ * time. A value with a raw "<" in it loses that one tag, which shops escape
+ * anyway.
+ */
 export function findTags(html, tag) {
-  const re = new RegExp(`<${tag}\\b((?:[^>"']|"[^"]*"|'[^']*')*)>`, 'gi');
+  const re = new RegExp(`<${tag}\\b((?:[^<>"']|"[^"<]*"|'[^'<]*')*)>`, 'gi');
   const out = [];
   for (const m of String(html ?? '').matchAll(re)) out.push(tagAttributes(m[1].replace(/\/\s*$/, '')));
   return out;
@@ -146,10 +152,13 @@ function tagList(tags) {
  */
 export function pageListing(fields, { url, canonical, platform, via = 'worker', now = Date.now(), brand } = {}) {
   const page = canonical || url;
+  // A14: a canonical on another host sets neither the link nor the key. The
+  // key is how a listing finds its mug, so a page naming another shop's
+  // product page as its canonical would otherwise update that shop's mug.
   const sourceUrl = page && hostOf(page) && hostOf(page) === hostOf(url) ? page : url;
   const b = brandFields(fields.brand, brand);
   const input = {
-    source: { url: sourceUrl, key: listingKey({ url: page, platform }), platform, via, fetchedAt: now },
+    source: { url: sourceUrl, key: listingKey({ url: sourceUrl, platform }), platform, via, fetchedAt: now },
     name: fields.name,
     brand: b.brand,
     franchise: b.franchise,
@@ -173,14 +182,20 @@ export function escapeRe(text) {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const TITLE_SEPARATORS = new Set(['|', '-', String.fromCharCode(0x2013), ':', ',']);
+
+// "Luna 3D Mug | ABYstyle" is "Luna 3D Mug". Compared as strings, not built
+// into a RegExp: a hostile og:site_name of 32 KB made "Regular expression too
+// large" and threw out of the extractor. collapse() has already folded every
+// whitespace run to one space, so at most one space sits on each side.
 function stripSiteName(title, siteName) {
   const t = collapse(title);
   const site = collapse(siteName);
   if (!t || !site || t.length <= site.length + 3) return t;
-  const enDash = String.fromCharCode(0x2013);
-  const escaped = escapeRe(site);
-  const re = new RegExp(`\\s*(?:\\||-|${enDash}|:|,)\\s*${escaped}\\s*$`, 'i');
-  return t.replace(re, '').trim() || t;
+  if (t.slice(t.length - site.length).toLowerCase() !== site.toLowerCase()) return t;
+  const head = t.slice(0, t.length - site.length).trimEnd();
+  if (!TITLE_SEPARATORS.has(head.slice(-1))) return t;
+  return head.slice(0, -1).trim() || t;
 }
 
 function availabilityOf(value) {

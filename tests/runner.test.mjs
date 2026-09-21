@@ -205,6 +205,57 @@ test('scan jsonld: sitemap URLs extracted one by one; a failing page is counted,
   assert.deepEqual(convex.posts('/runner/finish').map((c) => c.body), [{ runId: 'run2' }]);
 });
 
+/** A robots cache whose chosen lookup throws: a stand-in for any bug a hostile page reaches. */
+class ThrowingCache extends Map {
+  constructor(shouldThrow) {
+    super();
+    this.calls = 0;
+    this.shouldThrow = shouldThrow;
+  }
+
+  get(key) {
+    this.calls++;
+    if (this.shouldThrow(String(key), this.calls)) throw new TypeError('boom from a hostile page');
+    return super.get(key);
+  }
+}
+
+test('drain: an item that throws is reported INTERNAL and the drain goes on to the next', async () => {
+  const convex = fakeConvex({ queue: [
+    { id: 'q1', kind: 'page', url: 'https://hostile.example/products/x' },
+    { id: 'q2', kind: 'page', url: 'https://shop.example/products/pikachu-3d-mug' },
+  ] });
+  const { d } = deps({ convex, upstream: shopRoutes() });
+  d.robotsCache = new ThrowingCache((key) => key.includes('hostile'));
+  const summary = await drain({}, d);
+  assert.deepEqual([summary.pages.ok, summary.pages.failed], [1, 1]);
+  assert.deepEqual(summary.codes, { INTERNAL: 1 });
+  const [first, second] = convex.posts('/runner/ingest').map((c) => c.body);
+  assert.deepEqual([first.id, first.error.code], ['q1', 'INTERNAL']);
+  assert.match(first.error.message, /boom/);
+  assert.equal(second.id, 'q2');
+  assert.equal(second.listing.name, 'Pikachu 3D Mug', 'the item after the hostile one is still read');
+});
+
+test('scan: a URL that throws is counted, the scan reads the rest and stages everything it read', async () => {
+  const sitemap = '<urlset><url><loc>https://brand.example/product/luna-teapot</loc></url><url><loc>https://brand.example/product/hostile</loc></url><url><loc>https://brand.example/product/stein</loc></url></urlset>';
+  const convex = fakeConvex({ scanAnswer: { ok: true, runId: 'run9', source: { slug: 'brand', adapter: 'jsonld', baseUrl: 'https://brand.example', entryUrls: ['https://brand.example/sitemap.xml'], include: [], exclude: [], brand: null } } });
+  const { d } = deps({ convex, upstream: {
+    'https://brand.example/robots.txt': { status: 404 },
+    'https://brand.example/sitemap.xml': { body: sitemap },
+    'https://brand.example/product/luna-teapot': { body: fixture('shop/product/luna-teapot.html'), headers: { 'content-type': 'text/html' } },
+    'https://brand.example/product/stein': { body: fixture('jsonld-group.html'), headers: { 'content-type': 'text/html' } },
+  } });
+  // Lookups: the sitemap, then one per product page; the third is the hostile page.
+  d.robotsCache = new ThrowingCache((key, call) => call === 3);
+  const summary = await scan('brand', {}, d);
+  assert.deepEqual([summary.urls, summary.extracted, summary.failed], [3, 2, 1]);
+  assert.deepEqual(summary.codes, { INTERNAL: 1 });
+  const staged = convex.posts('/runner/stage').flatMap((c) => c.body.listings);
+  assert.deepEqual(staged.map((l) => l.name), ['Sailor Moon Luna Teapot', 'Dragon Relief Stein']);
+  assert.deepEqual(convex.posts('/runner/finish').map((c) => c.body), [{ runId: 'run9' }]);
+});
+
 test('scan: a refused entry, a manual source and the page cap end the run with an error or a stop', async () => {
   const refused = fakeConvex({ scanAnswer: { ok: true, runId: 'run3', source: { slug: 's', adapter: 'shopify', baseUrl: 'https://shop.example', entryUrls: ['https://shop.example/private/collection'], include: [], exclude: [] } } });
   const a = deps({ convex: refused, upstream: shopRoutes() });

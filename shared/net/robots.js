@@ -173,7 +173,7 @@ export function matchRules(rules, target) {
  * A policy from what fetching robots.txt produced:
  *   { status: 200, text }       rules from the file
  *   { status: 404 }             4xx: allow everything
- *   { status: 503 }             5xx: disallow everything for now
+ *   { status: 503 }             5xx, and 429 (A15): disallow everything for now
  *   { error: "timeout" | "network" | "refused" | "redirects", detail } no usable answer
  */
 export function robotsPolicy({ status, text, error, detail, token = ROBOTS_TOKEN } = {}) {
@@ -188,7 +188,9 @@ export function robotsPolicy({ status, text, error, detail, token = ROBOTS_TOKEN
     const { group, rules } = selectRules(parseRobots(text), token);
     return { kind: 'rules', status, group, rules };
   }
-  if (status >= 400 && status < 500) return { kind: 'allow-all', status, reason: `robots.txt answered ${status}, so no rules apply` };
+  // A15: 429 is a 4xx, but it says "slow down", not "there is no file". It
+  // is read like a 5xx, so nothing is fetched until robots.txt answers.
+  if (status >= 400 && status < 500 && status !== 429) return { kind: 'allow-all', status, reason: `robots.txt answered ${status}, so no rules apply` };
   return { kind: 'disallow-all', status: status || null, reason: `robots.txt answered ${status}, so everything is disallowed for now` };
 }
 

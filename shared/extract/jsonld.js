@@ -15,7 +15,8 @@ import { detectMaterial, parseCapacityMl } from './facts.js';
 import { collapse } from './names.js';
 import { absoluteUrl, baseHref, canonicalOf, cleanAmount, decodeAttr, pageListing } from './opengraph.js';
 
-const SCRIPT = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
+const SCRIPT_OPEN = /<script\b((?:[^<>"']|"[^"<]*"|'[^'<]*')*)>/gi;
+const SCRIPT_CLOSE = /<\/script\s*>/gi;
 const PRODUCT_TYPES = new Set(['product', 'productgroup', 'individualproduct', 'productmodel', 'someproducts']);
 // Keys that lead to other products (related, similar, reviewed) or to listings.
 const SKIP_KEYS = new Set([
@@ -23,6 +24,30 @@ const SKIP_KEYS = new Set([
   'review', 'reviews', 'aggregaterating', 'breadcrumb', 'potentialaction', 'relatedlink', 'significantlink',
 ]);
 const MAX_NODES = 5000;
+// A name is a string, an array of them, or {@value}/{name}: a few levels at
+// most. Deeper is a hostile page, and recursing 5,000 arrays deep overflowed
+// the stack.
+const MAX_TEXT_DEPTH = 8;
+const MAX_OFFERS = 200;
+
+/**
+ * [attributes, body] for each <script> element, found with forward searches
+ * only. A lazy [\s\S]*? up to </script> rescanned the rest of the page for
+ * every unclosed <script>, which made a hostile page quadratic. With no
+ * </script> left, no later script can close either, so the scan stops.
+ */
+function scriptElements(html) {
+  const out = [];
+  SCRIPT_OPEN.lastIndex = 0;
+  for (let open = SCRIPT_OPEN.exec(html); open; open = SCRIPT_OPEN.exec(html)) {
+    SCRIPT_CLOSE.lastIndex = SCRIPT_OPEN.lastIndex;
+    const close = SCRIPT_CLOSE.exec(html);
+    if (!close) break;
+    out.push([open[1], html.slice(SCRIPT_OPEN.lastIndex, close.index)]);
+    SCRIPT_OPEN.lastIndex = SCRIPT_CLOSE.lastIndex;
+  }
+  return out;
+}
 
 /** Makes near-JSON parseable: trailing commas dropped, raw control characters in strings escaped. */
 export function repairJson(text) {
@@ -78,9 +103,9 @@ function unwrap(body) {
 /** Every JSON-LD block in the page that parses (after repair), in order. */
 export function jsonLdBlocks(html) {
   const out = [];
-  for (const m of String(html ?? '').matchAll(SCRIPT)) {
-    if (!/\btype\s*=\s*["']?\s*application\/ld\+json/i.test(m[1])) continue;
-    const body = unwrap(m[2]);
+  for (const [attributes, raw] of scriptElements(String(html ?? ''))) {
+    if (!/\btype\s*=\s*["']?\s*application\/ld\+json/i.test(attributes)) continue;
+    const body = unwrap(raw);
     if (!body) continue;
     let parsed = tryParse(body);
     if (!parsed.ok) parsed = tryParse(repairJson(body));
@@ -97,19 +122,32 @@ export function typesOf(node) {
   return raw.filter((t) => typeof t === 'string').map((t) => t.split(/[/#:]/).pop().toLowerCase());
 }
 
-/** The first Product or ProductGroup, breadth first, so a page's main entity wins over nested ones. */
+/**
+ * The first Product or ProductGroup, breadth first, so a page's main entity
+ * wins over nested ones. At most MAX_NODES nodes are ever queued, and the
+ * queue is read by index: push(...array) threw on an array of 300,000 items,
+ * and shift() is a copy of the whole queue on each call.
+ */
 export function findProduct(values) {
-  const queue = [...values];
-  for (let seen = 0; queue.length && seen < MAX_NODES; seen++) {
-    const node = queue.shift();
+  const queue = [];
+  const add = (value) => {
+    if (queue.length >= MAX_NODES) return false;
+    queue.push(value);
+    return true;
+  };
+  for (const value of values) if (!add(value)) break;
+  for (let i = 0; i < queue.length; i++) {
+    const node = queue[i];
     if (Array.isArray(node)) {
-      queue.push(...node);
+      for (const item of node) if (!add(item)) break;
       continue;
     }
     if (!node || typeof node !== 'object') continue;
     if (typesOf(node).some((t) => PRODUCT_TYPES.has(t))) return node;
-    for (const [key, value] of Object.entries(node)) {
-      if (value && typeof value === 'object' && !SKIP_KEYS.has(key.toLowerCase())) queue.push(value);
+    for (const key in node) {
+      if (!Object.hasOwn(node, key)) continue;
+      const value = node[key];
+      if (value && typeof value === 'object' && !SKIP_KEYS.has(key.toLowerCase()) && !add(value)) break;
     }
   }
   return null;
@@ -121,17 +159,18 @@ function list(value) {
 }
 
 /** A plain string from a JSON-LD value: strings, numbers, {@value}, {name}, or the first of an array. */
-function text(value) {
+function text(value, depth = 0) {
   if (typeof value === 'string') return collapse(value) || undefined;
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (depth >= MAX_TEXT_DEPTH) return undefined;
   if (Array.isArray(value)) {
     for (const v of value) {
-      const t = text(v);
+      const t = text(v, depth + 1);
       if (t) return t;
     }
     return undefined;
   }
-  if (value && typeof value === 'object') return text(value['@value'] ?? value.name);
+  if (value && typeof value === 'object') return text(value['@value'] ?? value.name, depth + 1);
   return undefined;
 }
 
@@ -143,11 +182,17 @@ function brandName(value) {
   return undefined;
 }
 
+// normalizeListing keeps 12; collecting a few more leaves room for duplicates
+// without parsing every URL in a hostile list of thousands.
+const MAX_IMAGES_READ = 48;
+
 function imagesOf(value, base) {
   const out = [];
   for (const item of list(value)) {
+    if (out.length >= MAX_IMAGES_READ) break;
     const src = typeof item === 'string' ? item : item && typeof item === 'object' ? (item.url ?? item.contentUrl) : undefined;
     for (const s of list(src)) {
+      if (out.length >= MAX_IMAGES_READ) break;
       const abs = typeof s === 'string' ? absoluteUrl(decodeAttr(s), base) : null;
       if (abs) out.push(abs);
     }
@@ -175,11 +220,21 @@ function availableOf(value) {
 
 /** The first offer with a usable price: offers may be an object, an array, or an AggregateOffer. */
 function pickOffer(offers) {
+  // A loop with a ceiling, not push(...list): a nested offers array of
+  // 300,000 items overflowed the call stack as spread arguments.
   const flat = [];
+  const add = (o) => {
+    if (o && typeof o === 'object' && flat.length < MAX_OFFERS) flat.push(o);
+  };
   for (const o of list(offers)) {
+    if (flat.length >= MAX_OFFERS) break;
     if (!o || typeof o !== 'object') continue;
-    flat.push(o);
-    if (o.offers) flat.push(...list(o.offers).filter((x) => x && typeof x === 'object'));
+    add(o);
+    if (!o.offers) continue;
+    for (const inner of list(o.offers)) {
+      if (flat.length >= MAX_OFFERS) break;
+      add(inner);
+    }
   }
   let chosen = null;
   for (const o of flat) {

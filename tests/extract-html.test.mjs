@@ -29,7 +29,7 @@ test('json-ld: @graph, a Brand object, ImageObject, capacity from additionalProp
   assert.equal(l.dishwasherSafe, false, 'hand wash only');
   assert.equal(l.franchise, 'Sailor Moon');
   assert.equal(l.productType, 'Teapots');
-  assert.deepEqual(l.images, ['https://127.0.0.1:8899/img/pikachu.png']);
+  assert.deepEqual(l.images, ['https://shop.example/img/pikachu.png']);
 });
 
 test('json-ld: an array, a nested mainEntity, entities, trailing commas, a raw newline, broken and CDATA blocks', () => {
