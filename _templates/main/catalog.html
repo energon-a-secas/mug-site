@@ -1,0 +1,42 @@
+  <main id="main">
+    <div class="shell shell--catalog">
+      <aside class="shell__rail" id="facets" aria-label="Filters">
+        <div class="facet"><h3>Style</h3><div class="facet-list" data-facet="style"></div></div>
+        <div class="facet"><h3>Maker</h3><div class="facet-list" data-facet="brand"></div></div>
+        <div class="facet"><h3>Franchise</h3><div class="facet-list" data-facet="franchise"></div></div>
+      </aside>
+      <div class="shell__main stack">
+        <section class="intro" aria-labelledby="intro-title">
+          <h2 id="intro-title">Character mugs, <em>catalogued</em>.</h2>
+          <p id="intro-counts" class="muted">Sculpted heads, shaped bodies, bas relief and tiki, from the makers' own shops.</p>
+          <form class="searchbar" role="search" id="searchForm">
+            <label class="visually-hidden" for="q">Search mugs</label>
+            <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>
+            <input class="input" id="q" name="q" type="search" placeholder="Pikachu, Joker, tiki, teapot..." autocomplete="off">
+          </form>
+        </section>
+
+        <div class="results-bar">
+          <p class="muted" id="resultsLabel" aria-live="polite"></p>
+          <div class="toolbar">
+            <button type="button" class="btn btn--secondary btn--sm facets-toggle" id="facetsToggle" aria-controls="facets" aria-expanded="false">Filters</button>
+            <label class="visually-hidden" for="sort">Sort</label>
+            <select class="select btn--sm" id="sort" style="width:auto;min-height:36px">
+              <option value="new">Newest</option>
+              <option value="owned">Most collected</option>
+              <option value="wanted">Most wanted</option>
+              <option value="name">A to Z</option>
+            </select>
+            <div class="segmented" role="group" aria-label="Units">
+              <button type="button" data-units="ml">ml</button>
+              <button type="button" data-units="oz">oz</button>
+            </div>
+          </div>
+        </div>
+        <div class="chips" id="activeFilters"></div>
+
+        <div class="mug-grid" id="grid" aria-busy="true"></div>
+        <div class="load-more"><button type="button" class="btn btn--secondary" id="loadMore" hidden>Show more mugs</button></div>
+      </div>
+    </div>
+  </main>

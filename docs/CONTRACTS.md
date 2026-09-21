@@ -348,9 +348,9 @@ is never enough.
   shelves.
 - **Rate limits** (per subject, sliding window): shelf writes 240 per hour, profile edits
   30 per hour, photo uploads 20 per day, handle changes 3 per 30 days.
-- **Dev sign-in**, for local verification only: when the deployment has
-  `MUG_DEV_JWKS_URL`, `auth.config.ts` also trusts a local issuer whose keys never leave the
-  developer's machine. Production never has it, so production never accepts those tokens.
+- **Dev sign-in**, for local verification only: when the deployment has `MUG_DEV_JWKS`,
+  `auth.config.ts` also trusts a dev issuer whose private key never leaves the developer's
+  machine (A4). Production never has it, so production never accepts those tokens.
 
 ## C10. Politeness (binding for the Worker and the runner)
 
@@ -388,7 +388,7 @@ is never enough.
 | Convex | `MUG_PROXY_URL` | Worker base URL; unset sends every fetch to the runner queue and stores images in Convex |
 | Convex | `MUG_PROXY_TOKEN` | secret, same value as the Worker's |
 | Convex | `MUG_IMAGES_BASE` | optional, defaults to `<MUG_PROXY_URL>/i` |
-| Convex | `MUG_DEV_JWKS_URL` | local deployments only, never production |
+| Convex | `MUG_DEV_JWKS` | a `data:` URI on dev deployments; the literal `off` on production (A4, A7) |
 | Worker | `MUG_PROXY_TOKEN` | secret, `wrangler secret put` |
 | Worker | `IMAGES` | R2 binding to bucket `mug-images` |
 | runner | `MUG_CONVEX_SITE`, `MUG_RUNNER_TOKEN` | in `runner/.env`, gitignored |
@@ -410,3 +410,27 @@ otherwise every admin rename reads as a change at the shop. Rules 2 and 3 (same 
 same brand and SKU) from a shop page the mug does not know yet are **linked**: a
 `mugSources` row is added and nothing is staged, because a barcode match is not a
 question worth an admin's time.
+
+**A4 (2026-09-21, from the platform research).** The dev issuer's keys arrive as a
+`data:` URI in `MUG_DEV_JWKS` (Convex accepts one for `customJwt`), not a URL, so a dev
+deployment in the cloud needs no reachable key server. Renamed from `MUG_DEV_JWKS_URL`.
+
+**A5 (2026-09-21, from the platform research).** C4.4 gains a first choice: when an image
+comes from Shopify's CDN, the thumbnail is the CDN's own `width=480` copy, mirrored like
+the original. The browser-made thumbnail stays for every other source. Images are served
+through `/i/` until the owner decides on an R2 custom domain (`MUG_IMAGES_BASE`), which
+takes image traffic off the Worker's 100,000 requests a day.
+
+**A6 (2026-09-21, from the brand research).** On real brand shops a Shopify `vendor` is
+often the licence, not the maker (Bioworld lists its Ewok mug under vendor "Star Wars").
+`/v1/discover` and `/v1/extract` accept an optional `brand` (1 to 80 chars): the
+source's own brand. When present, extractors use it as the listing's `brand`, keep the
+shop's vendor in `tags`, and offer the vendor as the franchise when `detectFranchise`
+recognises it. The runner's `/runner/scan` answer carries the source's `brand` for the
+same purpose. Additive: a call without `brand` behaves as before.
+
+**A7 (2026-09-21, found on the first push).** Convex refuses to deploy an `auth.config.ts`
+that reads an environment variable the deployment does not have, even inside a
+conditional. So `MUG_DEV_JWKS` is set on every deployment: a `data:` URI on a dev
+deployment, the literal `off` on production. Only a value starting `data:` adds the dev
+issuer, so production still trusts Clerk alone.

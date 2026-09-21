@@ -1,0 +1,29 @@
+  <main id="main">
+    <div class="wrap">
+      <article class="prose">
+        <p class="eyebrow">For shop owners</p>
+        <h2>MugBot</h2>
+        <p>MugBot is how Mug keeps its catalogue's facts current: names, capacities, styles, prices and product photos of collectible mugs, read from the makers' own shops. Every mug in the catalogue links back to the shop page it came from.</p>
+
+        <h3>How it identifies itself</h3>
+        <p>Every request carries the User-Agent <code>MugBot/1.0 (+https://mug.neorgon.com/bot/)</code>. It never presents itself as a browser, and it never tries to get past a bot challenge: a page that challenges it is left for a person to enter by hand.</p>
+
+        <h3>robots.txt</h3>
+        <p>MugBot reads a shop's <code>robots.txt</code> before its first request and obeys the <code>MugBot</code> group, or <code>*</code> when there is none. To keep it out of your shop entirely:</p>
+        <pre class="panel mono">User-agent: MugBot
+Disallow: /</pre>
+        <p>A robots.txt that cannot be read because of a server error is treated as "stay out" until it can be read again.</p>
+
+        <h3>How much it reads</h3>
+        <ul>
+          <li>One request at a time per shop, at least 1.5 seconds apart.</li>
+          <li>Public product feeds (such as a Shopify store's product JSON) and the structured data on product pages. No accounts, no carts, no checkout.</li>
+          <li>A scan stops after 40 listing pages, and a page read in the last week is not read again.</li>
+          <li>Product photos are copied once, kept with the address they came from, and shown with a link to your shop.</li>
+        </ul>
+
+        <h3>Asking to be left out, or for a correction</h3>
+        <p>Use the Report link at the bottom left of any page on this site, name your shop or the mug, and say what you would like: a correction, a photo removed, or your shop left out. Removal is done by hand, and the shop is marked so it is not read again.</p>
+      </article>
+    </div>
+  </main>
