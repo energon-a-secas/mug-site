@@ -24,7 +24,7 @@ SITE = "https://mug.neorgon.com"
 
 # The production Convex deployment's URL, once it exists. Empty leaves every
 # page on "not connected yet"; on localhost ?convex= overrides it (js/backend.js).
-CONVEX_URL = ""
+CONVEX_URL = "https://neighborly-kookabura-286.convex.cloud"
 
 JSONLD = """  <script type="application/ld+json">
   {

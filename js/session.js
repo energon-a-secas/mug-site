@@ -111,7 +111,11 @@ async function open() {
     paintAdminLink(state.isAdmin);
   };
 
-  const dev = devTokenFor(location, storage('session'));
+  // A dev token is for a deployment picked with ?convex=. The page's own
+  // deployment is production, which refuses the dev issuer, and a refused
+  // token fails every query the tab makes, public ones included.
+  const production = (document.querySelector('meta[name="neo-convex-url"]')?.getAttribute('content') || '').trim();
+  const dev = url !== production ? devTokenFor(location, storage('session')) : null;
   if (dev) {
     state.dev = dev;
     state.client.setAuth(dev.token);
