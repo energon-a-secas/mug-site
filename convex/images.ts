@@ -5,6 +5,7 @@ import { LIMITS } from "../shared/contract.js";
 import { adminList, requireAdmin } from "./lib/access.ts";
 import { isAdminSubject } from "./lib/admin.ts";
 import { fetchImageDirect } from "./lib/fallbackFetch.ts";
+import { imageStateOf } from "./lib/imageState.ts";
 import { imagesBase, imagesEnv, resolveRef } from "./lib/images.ts";
 import { callProxy, proxyConfigured, proxyEnv } from "./lib/proxy.ts";
 import { done, fail } from "./lib/result.ts";
@@ -30,10 +31,8 @@ export function shopifyThumbUrl(raw: string): string | null {
   return url.toString();
 }
 
-function stateFor(images: Ref[], pending: string[], blocked: boolean): "none" | "pending" | "blocked" | "failed" | "thumbs" | "ok" {
-  if (pending.length) return blocked ? "blocked" : "failed";
-  if (!images.length) return "none";
-  return images.every((ref) => ref.thumb) ? "ok" : "thumbs";
+function stateFor(images: Ref[], pending: string[], blocked: boolean, failed: string[] = []) {
+  return imageStateOf(images, pending, failed, blocked);
 }
 
 export const mugForImages = internalQuery({
@@ -107,7 +106,7 @@ export const applyMirror = internalMutation({
     await ctx.db.patch(mug._id, {
       images,
       pendingImages: args.remaining,
-      imageState: stateFor(images, args.remaining, args.blocked),
+      imageState: stateFor(images, args.remaining, args.blocked, mug.failedImages ?? []),
       updatedAt: Date.now(),
     });
   },
@@ -120,8 +119,9 @@ export const retry = mutation({
     if (!who.ok) return who;
     const mug = await ctx.db.get(args.mugId);
     if (!mug) return fail("not-found", "That mug no longer exists.");
-    if (!mug.pendingImages.length) return fail("nothing-pending", "This mug has no images waiting.");
-    await ctx.db.patch(mug._id, { imageState: "pending", updatedAt: Date.now() });
+    const again = [...mug.pendingImages, ...(mug.failedImages ?? [])].slice(0, LIMITS.images);
+    if (!again.length) return fail("nothing-pending", "This mug has no images waiting.");
+    await ctx.db.patch(mug._id, { pendingImages: again, failedImages: undefined, imageState: "pending", updatedAt: Date.now() });
     await ctx.scheduler.runAfter(0, internal.images.mirrorMug, { mugId: mug._id });
     return done();
   },
@@ -164,7 +164,7 @@ export const setThumb = internalMutation({
     const mug = await ctx.db.get(args.mugId);
     if (!mug || !mug.images[args.index]) return false;
     const images = mug.images.map((ref, i) => (i === args.index ? { ...ref, thumb: args.thumb } : ref));
-    await ctx.db.patch(mug._id, { images, imageState: stateFor(images as Ref[], mug.pendingImages, mug.imageState === "blocked"), updatedAt: Date.now() });
+    await ctx.db.patch(mug._id, { images, imageState: stateFor(images as Ref[], mug.pendingImages, mug.imageState === "blocked", mug.failedImages ?? []), updatedAt: Date.now() });
     return true;
   },
 });
@@ -218,7 +218,7 @@ export const appendImage = internalMutation({
     await ctx.db.patch(mug._id, {
       images,
       pendingImages,
-      imageState: stateFor(images as Ref[], pendingImages, mug.imageState === "blocked"),
+      imageState: stateFor(images as Ref[], pendingImages, mug.imageState === "blocked", mug.failedImages ?? []),
       updatedAt: Date.now(),
     });
     return true;

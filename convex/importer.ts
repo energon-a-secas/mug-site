@@ -42,7 +42,7 @@ export const queueUrl = internalMutation({
 });
 
 export const applyUrl = internalMutation({
-  args: { stagingId: v.id("staging"), runId: v.id("runs"), listing: v.optional(v.any()), error: v.optional(v.object({ code: v.string(), message: v.string() })) },
+  args: { stagingId: v.id("staging"), runId: v.id("runs"), listing: v.optional(v.any()), error: v.optional(v.object({ code: v.string(), message: v.string(), retryable: v.optional(v.boolean()) })) },
   handler: async (ctx, args) => {
     const now = Date.now();
     let listing;
@@ -73,14 +73,22 @@ export const fromUrl = action({
     const local = !proxyConfigured(proxyEnv());
     const queued: any = await ctx.runMutation(internal.importer.queueUrl, { url, subject: identity!.subject, local });
     if (queued.existing || local) return done({ stagingId: queued.stagingId, status: queued.status, existing: queued.existing });
-    const answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url } });
-    const result: any = await ctx.runMutation(internal.importer.applyUrl, {
-      stagingId: queued.stagingId,
-      runId: queued.runId,
-      listing: answer.ok ? answer.listing : undefined,
-      error: answer.ok ? undefined : { code: answer.code, message: answer.message },
-    });
-    return done({ stagingId: queued.stagingId, status: result.outcome, match: result.match ?? null, error: answer.ok ? null : { code: answer.code, message: answer.message } });
+    // A single import has no scan to drain it, so a retryable failure gets its
+    // second (and last) try here rather than waiting "queued" forever.
+    let answer;
+    let result: any;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url } });
+      result = await ctx.runMutation(internal.importer.applyUrl, {
+        stagingId: queued.stagingId,
+        runId: queued.runId,
+        listing: answer.ok ? answer.listing : undefined,
+        error: answer.ok ? undefined : { code: answer.code, message: answer.message, ...(answer.retryable === true ? { retryable: true } : {}) },
+      });
+      if (result.outcome !== "retry") break;
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
+    return done({ stagingId: queued.stagingId, status: result.outcome, match: result.match ?? null, error: answer!.ok ? null : { code: answer!.code, message: answer!.message } });
   },
 });
 

@@ -63,9 +63,14 @@ http.route({
     const input = await body(request);
     if (typeof input.id !== "string") return json(400, { ok: false, code: "bad-body", message: "id is required." });
     const error = input.error && typeof input.error === "object"
-      ? { code: String(input.error.code || "INTERNAL").slice(0, 40), message: String(input.error.message || "").slice(0, 300) }
+      ? {
+          code: String(input.error.code || "INTERNAL").slice(0, 40),
+          message: String(input.error.message || "").slice(0, 300),
+          ...(input.error.retryable === true ? { retryable: true } : {}),
+        }
       : undefined;
-    const result = await ctx.runMutation(internal.runner.ingest, { id: input.id, listing: input.listing, error });
+    const url = typeof input.url === "string" ? input.url.slice(0, 2048) : undefined;
+    const result = await ctx.runMutation(internal.runner.ingest, { id: input.id, url, listing: input.listing, error });
     return json(result.ok ? 200 : 400, result);
   }),
 });
@@ -122,9 +127,11 @@ http.route({
     if (typeof input.mugId !== "string" || !Number.isInteger(input.index) || typeof input.storageId !== "string") {
       return json(400, { ok: false, code: "bad-body", message: "mugId, index and storageId are required." });
     }
-    const target = await ctx.runQuery(internal.runner.imageTarget, { mugId: input.mugId, index: input.index });
+    // A9: the URL, when sent, decides which image this is; positions shift as others land.
+    const url = typeof input.url === "string" ? input.url.slice(0, 2048) : undefined;
+    const target = await ctx.runQuery(internal.runner.imageTarget, { mugId: input.mugId, index: input.index, url });
     if (!target) return json(400, { ok: false, code: "not-pending", message: "That image is not waiting for the runner." });
-    const result = await ctx.runAction(internal.images.acceptRunnerImage, { mugId: target.mugId, index: input.index, storageId: input.storageId });
+    const result = await ctx.runAction(internal.images.acceptRunnerImage, { mugId: target.mugId, index: target.index, storageId: input.storageId });
     return json(result.ok ? 200 : 400, result);
   }),
 });

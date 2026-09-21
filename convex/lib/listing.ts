@@ -69,6 +69,7 @@ export const listingValidator = v.object({
     reason: v.string(),
   }),
   productType: v.optional(v.string()),
+  vendor: v.optional(v.string()),
 });
 
 // C4.1. `key` and `thumb` are R2 object keys when store is "r2", and Convex

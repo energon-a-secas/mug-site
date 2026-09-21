@@ -55,6 +55,8 @@ export default defineSchema({
     images: v.array(imageRefValidator),
     // Remote URLs from the listing that are not mirrored yet (C4.3).
     pendingImages: v.array(v.string()),
+    // URLs the runner could not fetch either (A9); images:retry moves them back.
+    failedImages: v.optional(v.array(v.string())),
     // none: no images at all. pending: mirroring is scheduled. blocked: the
     // image host refused the Worker, so the runner fetches them. failed: gave
     // up. thumbs: originals stored, thumbnails missing. ok: nothing to do.

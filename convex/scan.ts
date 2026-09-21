@@ -50,7 +50,7 @@ export const discover = internalAction({
       },
     });
     if (!answer.ok) {
-      await ctx.runMutation(internal.scan.discoverFailed, { runId: args.runId, code: answer.code, message: answer.message });
+      await ctx.runMutation(internal.scan.discoverFailed, { runId: args.runId, code: answer.code, message: answer.message, retryable: answer.retryable === true });
       return;
     }
     await ctx.runMutation(internal.scan.discovered, {
@@ -97,12 +97,12 @@ export const discovered = internalMutation({
 });
 
 export const discoverFailed = internalMutation({
-  args: { runId: v.id("runs"), code: v.string(), message: v.string() },
+  args: { runId: v.id("runs"), code: v.string(), message: v.string(), retryable: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
     const run = await ctx.db.get(args.runId);
     if (!run || run.status !== "discovering") return;
     const now = Date.now();
-    if (RETRY_CODES.includes(args.code) && run.retries < 2) {
+    if ((RETRY_CODES.includes(args.code) || args.retryable === true) && run.retries < 2) {
       await ctx.db.patch(run._id, { retries: run.retries + 1, updatedAt: now });
       await ctx.scheduler.runAfter(RETRY_MS, internal.scan.discover, { runId: run._id });
       return;
@@ -160,13 +160,13 @@ export const extractNext = internalAction({
       runId: args.runId,
       stagingId: next.row.id,
       listing: answer.ok ? answer.listing : undefined,
-      error: answer.ok ? undefined : { code: answer.code, message: answer.message },
+      error: answer.ok ? undefined : { code: answer.code, message: answer.message, ...(answer.retryable === true ? { retryable: true } : {}) },
     });
   },
 });
 
 export const extracted = internalMutation({
-  args: { runId: v.id("runs"), stagingId: v.id("staging"), listing: v.optional(v.any()), error: v.optional(v.object({ code: v.string(), message: v.string() })) },
+  args: { runId: v.id("runs"), stagingId: v.id("staging"), listing: v.optional(v.any()), error: v.optional(v.object({ code: v.string(), message: v.string(), retryable: v.optional(v.boolean()) })) },
   handler: async (ctx, args) => {
     const run = await ctx.db.get(args.runId);
     if (!run || run.status !== "extracting") return;

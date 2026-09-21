@@ -32,7 +32,7 @@ export const list = query({
         source = s ? { slug: s.slug, name: s.name } : null;
       }
       const matched = row.match?.mugId ? await ctx.db.get(row.match.mugId) : null;
-      const result = row.mugId ? await ctx.db.get(row.mugId) : null;
+      const made = row.mugId ? await ctx.db.get(row.mugId) : null;
       page.push({
         id: row._id,
         key: row.key,
@@ -45,7 +45,7 @@ export const list = query({
         error: row.error ?? null,
         attempts: row.attempts,
         source,
-        mug: result ? { slug: result.slug, name: result.name } : null,
+        mug: made ? { id: made._id, slug: made.slug, name: made.name } : null,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
       });
@@ -124,7 +124,9 @@ export const retry = mutation({
     const who = await requireAdmin(ctx);
     if (!who.ok) return who;
     const row = await ctx.db.get(args.id);
-    if (!row || !row.url || !["failed", "needsLocal"].includes(row.status)) return fail("not-retryable", "Only a failed or runner-bound page with a URL can be retried.");
+    if (!row || !row.url || !["failed", "needsLocal", "queued"].includes(row.status)) {
+      return fail("not-retryable", "Only a failed, queued or runner-bound page with a URL can be retried.");
+    }
     await ctx.db.patch(row._id, { status: "needsLocal", attempts: 0, error: undefined, updatedAt: Date.now() });
     return done({ status: "needsLocal" });
   },

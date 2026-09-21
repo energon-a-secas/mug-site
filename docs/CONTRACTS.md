@@ -434,3 +434,28 @@ that reads an environment variable the deployment does not have, even inside a
 conditional. So `MUG_DEV_JWKS` is set on every deployment: a `data:` URI on a dev
 deployment, the literal `off` on production. Only a value starting `data:` adds the dev
 issuer, so production still trusts Clerk alone.
+
+**A8 (2026-09-21, from the Worker build).** C1 gains an optional `vendor` (1 to 80 chars):
+the shop's own vendor or brand value when the source named the maker (A6). It replaces the
+tag A6 used to add, because tags feed fact detection: a vendor called "Fixture Ceramics" made
+a mug `ceramic`. `normalizeListing` never reads facts from `vendor`; it only offers it as the
+franchise when `detectFranchise` knows it. Additive: stored listings without it stay valid.
+
+**A9 (2026-09-21, from the Worker build).** C8's image items. A runner that cannot fetch a
+blocked image reports it to `/runner/ingest` as `{ id: "<mugId>:<index>", url, error }`; the
+URL leaves `pendingImages` for a new optional `mugs.failedImages`, and `images:retry` moves
+failed ones back. `/runner/image` also takes `url`. When a `url` is sent it decides which
+image is meant, because positions shift as a mug's other images land.
+
+**A10 (2026-09-21, from the Worker build).** C4.2: a key's extension is always the sniffed
+type, thumbnails included (`t/<sha256>.png` when a browser cannot encode WebP). C4.4: the
+480 px bound is the longer side, not the width, so a portrait mug fits its square tile.
+
+**A11 (2026-09-21, from the Worker build).** A1's `next.url` may carry a fragment (a sitemap
+index's position, `#mug-child=N&mug-offset=M`) that is never sent to the shop. Convex passes
+`next.url` back unmodified.
+
+**A12 (2026-09-21, from the Worker build).** An unreadable robots.txt (5xx or timeout) is a
+refusal for now (RFC 9309), not a rule. Such a `ROBOTS_DISALLOWED` carries `retryable: true`,
+the Worker's envelope lets it through, and Convex retries it once (a page, a discover page
+and a single URL import alike). A real `Disallow` never carries it, and stays final.

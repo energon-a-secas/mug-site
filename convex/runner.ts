@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
+import { imageFailure, pendingIndex } from "./lib/runnerCore.ts";
 import { checkRate, recordRate } from "./lib/rate.ts";
 import { applyExtract, bumpRun, reNormalize, stageListing } from "./lib/stageCore.ts";
 
@@ -37,8 +38,15 @@ export const touch = internalMutation({
 });
 
 export const ingest = internalMutation({
-  args: { id: v.string(), listing: v.optional(v.any()), error: v.optional(v.object({ code: v.string(), message: v.string() })) },
+  args: {
+    id: v.string(),
+    url: v.optional(v.string()),
+    listing: v.optional(v.any()),
+    error: v.optional(v.object({ code: v.string(), message: v.string(), retryable: v.optional(v.boolean()) })),
+  },
   handler: async (ctx, args) => {
+    const image = /^([^:]+):(\d+)$/.exec(args.id);
+    if (image) return await imageFailure(ctx.db, image[1], Number(image[2]), args.url, args.error, Date.now());
     const stagingId = ctx.db.normalizeId("staging", args.id);
     if (!stagingId) return { ok: false, code: "bad-id", message: "That is not a queue item id." };
     const now = Date.now();
@@ -132,10 +140,12 @@ export const finish = internalMutation({
 });
 
 export const imageTarget = internalQuery({
-  args: { mugId: v.string(), index: v.number() },
+  args: { mugId: v.string(), index: v.number(), url: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const mugId = ctx.db.normalizeId("mugs", args.mugId);
     const mug = mugId ? await ctx.db.get(mugId) : null;
-    return mug && mug.imageState === "blocked" && mug.pendingImages[args.index] ? { mugId: mug._id } : null;
+    if (!mug || mug.imageState !== "blocked") return null;
+    const index = pendingIndex(mug, args.index, args.url);
+    return index >= 0 ? { mugId: mug._id, index } : null;
   },
 });

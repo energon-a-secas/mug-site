@@ -41,10 +41,14 @@ kill:
 # ── Tests ─────────────────────────────────────────────────────────────────────
 # The backend tests import convex/lib/*.ts directly, so this needs no install:
 # only a Node that strips TypeScript types by default (verified on v25.4.0).
-.PHONY: validate pages
+.PHONY: validate test pages
+# A glob, not a directory: Node 25 reads `node --test tests/` as a module path.
 validate:
-	@node --test tests/
+	@node --test 'tests/*.test.mjs'
 	@python3 scripts/pages.py --check
+
+test:
+	@node --test 'tests/*.test.mjs'
 
 pages:
 	@python3 scripts/pages.py
@@ -73,12 +77,35 @@ dev-token:
 	@node scripts/dev-auth.mjs token
 
 # ── Worker (dev) ──────────────────────────────────────────────────────────────
-.PHONY: worker-install worker-dev runner
+# worker/.dev.vars (gitignored) holds the dev MUG_PROXY_TOKEN, the same value as
+# the dev deployment's, and MUG_DEV_ALLOW_LOOPBACK=1 only for the fixture shop.
+.PHONY: worker-install worker-dev worker-test worker-check worker-stop fixture-shop runner runner-drain runner-scan
 worker-install:
 	cd worker && npm install
 
 worker-dev:
 	cd worker && npx wrangler dev --port 8787
+
+worker-test:
+	@node --test tests/worker.test.mjs tests/polite.test.mjs tests/robots.test.mjs tests/guard.test.mjs tests/sniff.test.mjs
+
+# Bundles the Worker exactly as a deploy would, and uploads nothing.
+worker-check:
+	cd worker && npx wrangler deploy --dry-run --outdir .wrangler/dry-run
+
+# Killing the port leaves wrangler's own processes running; this ends them too.
+worker-stop:
+	-@lsof -ti :8787 -ti :8899 | xargs kill 2>/dev/null
+	-@pkill -f "wrangler dev" 2>/dev/null; echo "Worker and fixture shop stopped"
+
+fixture-shop:
+	cd tests/fixtures/shop && python3 -m http.server 8899 --bind 127.0.0.1
+
+runner-drain:
+	node runner/mug-runner.mjs drain $(ARGS)
+
+runner-scan:
+	node runner/mug-runner.mjs scan $(SOURCE)
 
 runner:
 	@echo "The runner fetches, from your own connection, what the Worker is refused."

@@ -146,7 +146,7 @@ export type ExtractOutcome = "pending" | "unchanged" | "linked" | "needsLocal" |
 /** The answer to a queued or runner-bound page: a listing, or a C3 error. */
 export async function applyExtract(
   db: Db,
-  args: { stagingId: string; listing?: any; error?: { code: string; message: string }; now: number },
+  args: { stagingId: string; listing?: any; error?: { code: string; message: string; retryable?: boolean }; now: number },
 ): Promise<{ outcome: ExtractOutcome; match?: any }> {
   const { stagingId, listing, error, now } = args;
   const row = await db.get(stagingId as any);
@@ -187,7 +187,10 @@ export async function applyExtract(
     await bumpRun(db, r.runId, { needsLocal: 1 }, now);
     return { outcome: "needsLocal" };
   }
-  if (RETRY_CODES.includes(failure.code) && attempts < MAX_ATTEMPTS) {
+  // A12: a robots.txt that could not be read is a refusal for now; a real
+  // Disallow never comes back retryable, so it is still final.
+  const retryable = RETRY_CODES.includes(failure.code) || (failure.code === "ROBOTS_DISALLOWED" && error?.retryable === true);
+  if (retryable && attempts < MAX_ATTEMPTS) {
     await db.patch(r._id, { status: r.status, attempts, error: failure, updatedAt: now });
     return { outcome: "retry" };
   }
