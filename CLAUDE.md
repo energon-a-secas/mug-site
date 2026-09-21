@@ -5,9 +5,18 @@ tiki, teapots) with collectors' shelves. The admin imports listings from brand
 shops through a Cloudflare Worker, a local runner reads what the Worker is
 refused, and everything waits in a review queue before it is published.
 
-**Domain:** mug.neorgon.com (not live yet) · **Port:** 8892 · **Contracts:**
+**Domain:** mug.neorgon.com (live since 2026-09-21) · **Port:** 8892 · **Contracts:**
 `docs/CONTRACTS.md` (read it before changing any interface; amend, never edit
 silently) · **Sources and why:** `docs/sources.md`
+
+**Production:** Convex `neighborly-kookabura-286`, in a different Convex team
+from the fleet's older backends (vitrina's included), so nothing can be copied
+from their settings with the CLI's current login; Worker `https://mug-proxy.neorgon.workers.dev`
+with R2 bucket `mug-images`; images are served through the Worker's `/i/`. Set
+there: `MUG_DEV_JWKS=off`, `PUBLISHING=open`, `MUG_PROXY_URL`, and
+`MUG_PROXY_TOKEN` (the same value as the Worker's secret; no copy is kept, so
+rotating means setting a new value on both). `ADMIN_SUBJECTS` takes the owner's
+Clerk id, which `/admin/` shows to a signed-in account that is not yet a maintainer.
 
 ## Run
 
