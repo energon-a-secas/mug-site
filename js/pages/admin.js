@@ -9,7 +9,7 @@
 import { FN } from '../backend.js';
 import { connect } from '../session.js';
 import { ICONS } from '../render/icons.js';
-import { $, $$ } from '../utils.js';
+import { $, $$, escHtml } from '../utils.js';
 import { notConnected, signInPrompt } from './common.js';
 import { createContext } from '../admin/context.js';
 import { parseHash } from '../admin/routes.js';
@@ -27,10 +27,14 @@ const SECTIONS = {
   runner: () => import('../admin/runner.js'),
 };
 
-function notMaintainer() {
+// The account id is the caller's own (it is inside their sign-in token
+// already), shown so the first maintainer can be added without a dashboard.
+function notMaintainer(subject) {
+  const id = subject ? `<p class="hint">Your account id is <code>${escHtml(subject)}</code>.</p>` : '';
   return `<div class="empty">${ICONS.mug()}
     <p><strong>This page is for the catalogue's maintainers.</strong></p>
     <p class="hint">You are signed in, but this account is not one of them. Maintainers are the accounts listed in the deployment's <code>ADMIN_SUBJECTS</code> setting.</p>
+    ${id}
     <a class="btn btn--secondary" href="/">Back to the catalog</a>
   </div>`;
 }
@@ -152,7 +156,7 @@ export async function start() {
     }
     if (mine !== seq) return;
     if (who && who.isAdmin) showConsole(session);
-    else showGate(notMaintainer());
+    else showGate(notMaintainer(who && who.subject));
   };
 
   gate.addEventListener('click', async (event) => {

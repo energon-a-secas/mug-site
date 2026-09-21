@@ -7,13 +7,15 @@ import { publishingOpen } from "./lib/profilesCore.ts";
 import { readStat, STAT } from "./lib/counters.ts";
 
 // The admin page's first two calls. whoami answers everyone, so the page can
-// say why it is empty; dashboard answers admins only.
+// say why it is empty; dashboard answers admins only. `subject` is the
+// caller's own, already inside their token: a new deployment's first
+// maintainer reads it off the page and adds it to ADMIN_SUBJECTS.
 
 export const whoami = query({
   args: {},
   handler: async (ctx) => {
     const subject = await subjectOf(ctx);
-    return { signedIn: !!subject, isAdmin: isAdminSubject(subject, adminList()) };
+    return { signedIn: !!subject, isAdmin: isAdminSubject(subject, adminList()), subject };
   },
 });
 
