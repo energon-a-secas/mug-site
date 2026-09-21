@@ -36,3 +36,11 @@ __pycache__/
 
 # ── Archived skills (scripts/prune-skills.sh) ─────────────────────────────────
 skills-archived/
+
+# ── Mug: local-only state ─────────────────────────────────────────────────────
+# wrangler dev's local R2 and cache, the Worker's dev secrets, the dev sign-in
+# keys (docs/CONTRACTS.md C9), and the runner's token file.
+.wrangler/
+.dev.vars
+.dev-auth/
+runner/.env

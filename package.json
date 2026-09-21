@@ -1,0 +1,12 @@
+{
+  "name": "mug-site",
+  "private": true,
+  "type": "module",
+  "description": "Exists for the Convex CLI that deploys convex/ and for \"type\": \"module\". The site has no build step: pages are static HTML, and the browser loads the Convex client from a pinned jsDelivr URL.",
+  "scripts": {
+    "deploy": "convex deploy"
+  },
+  "dependencies": {
+    "convex": "1.45.0"
+  }
+}
