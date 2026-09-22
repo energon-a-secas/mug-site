@@ -99,7 +99,7 @@ const SOURCES: SeedSource[] = [
   {
     slug: "silver-buffalo", name: "Silver Buffalo", brand: "Silver Buffalo", adapter: "manual", baseUrl: "https://shop.silver-buffalo.com",
     entryUrls: [], watch: false,
-    notes: "robots.txt: User-agent * Disallow /. Never fetched. Paste or type.",
+    notes: "Shop robots.txt: User-agent * Disallow /. Never fetched. The brand site www.silver-buffalo.com welcomes crawlers but is marketing only (blog posts; its Pokémon page links to Amazon). Paste or type, or ask them to allow MugBot.",
   },
   {
     slug: "just-funky", name: "Just Funky", brand: "Just Funky", adapter: "manual", baseUrl: "https://justfunky.com",

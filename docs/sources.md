@@ -35,7 +35,7 @@ structured field: it is read from titles and descriptions by
 | BigMouth Inc | A Cloudflare managed challenge answers every page, from any origin. A Shopify catalogue endpoint for agents is advertised at `/.well-known/ucp`; untested, and the lead worth following |
 | ABYstyle EU (abystyle.com) | PrestaShop behind a Cloudflare challenge. Product URLs embed the EAN13. Use ABYstyle US, or paste |
 | Funko | robots.txt disallows search (`*?q=`); product pages answer a challenge. The product sitemap is readable, so a discovery-only job could list new mug URLs for manual entry |
-| Silver Buffalo | Its shop's robots.txt is `User-agent: *` / `Disallow: /`. Never fetched, and neither is its Amazon store (see Amazon below) |
+| Silver Buffalo | Its shop (`shop.silver-buffalo.com`) has `User-agent: *` / `Disallow: /`: never fetched, and neither is its Amazon store (see Amazon below). The brand site (`www.silver-buffalo.com`) welcomes every crawler, ClaudeBot by name, but it is marketing only: 41 pages, 32 of them blog posts, no product pages, and its Pokémon page links out to Amazon (checked 2026-09-21). The way in is asking them to allow MugBot on the shop |
 | Just Funky | Same: `Disallow: /` for every agent. Never fetched |
 | Surreal Entertainment | A brand site with no catalogue |
 
