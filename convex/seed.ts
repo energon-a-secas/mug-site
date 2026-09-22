@@ -24,6 +24,7 @@ const BRANDS: SeedBrand[] = [
   { name: "Just Funky", website: "https://justfunky.com", country: "US" },
   { name: "Surreal Entertainment", website: "https://www.surrealhq.com", country: "US" },
   { name: "Vandor", country: "US" },
+  { name: "Pop Culture Coffee", website: "https://www.popculturecoffee.com", country: "US" },
 ];
 
 type SeedSource = {
@@ -31,9 +32,11 @@ type SeedSource = {
   currency?: string;
   name: string;
   brand: string;
-  adapter: "shopify" | "manual";
+  adapter: "shopify" | "jsonld" | "manual";
   baseUrl: string;
   entryUrls: string[];
+  include?: string[];
+  fetchVia?: "cloud" | "local";
   watch: boolean;
   notes: string;
 };
@@ -41,13 +44,13 @@ type SeedSource = {
 const SOURCES: SeedSource[] = [
   {
     slug: "abystyle-us", currency: "USD", name: "ABYstyle US shop", brand: "ABYstyle", adapter: "shopify", baseUrl: "https://abystyle.us",
-    entryUrls: ["https://abystyle.us/collections/3d-mugs", "https://abystyle.us/collections/mugs"], watch: true,
-    notes: "Shopify, 200 from residential and datacenter origins. 9 3D mugs, 38 mugs. The EU shop (abystyle.com) is challenged.",
+    entryUrls: [], watch: true,
+    notes: "Shopify, readable from residential and datacenter origins. The whole-store feed (410 products, about 72 mugs, teapots and mug gift sets) is read, not just the 3d-mugs and mugs collections. The EU shop (abystyle.com) is challenged.",
   },
   {
     slug: "bioworld", currency: "USD", name: "Bioworld shop", brand: "Bioworld", adapter: "shopify", baseUrl: "https://shop.bioworldmerch.com",
     entryUrls: ["https://shop.bioworldmerch.com/collections/sculpted-mugs-sippers", "https://shop.bioworldmerch.com/collections/mugs"], watch: true,
-    notes: "Maker of the Ewok bas relief mug; carries the former Vandor line. Vendor field is the licence (A6). Prices look wholesale.",
+    notes: "Carries the former Vandor line; its shop no longer lists the Ewok bas relief mug (none of 3,672 products, 2026-09-21). Vendor field is the licence (A6). Prices look wholesale.",
   },
   {
     slug: "geeki-tikis", currency: "USD", name: "Geeki Tikis shop", brand: "Geeki Tikis", adapter: "shopify", baseUrl: "https://www.geekitikis.com",
@@ -65,6 +68,11 @@ const SOURCES: SeedSource[] = [
     notes: "Spanish consumer store: 47 tazas, 5 of them 3D.",
   },
   {
+    slug: "pop-culture-coffee", currency: "USD", name: "Pop Culture Coffee", brand: "Pop Culture Coffee", adapter: "shopify", baseUrl: "https://www.popculturecoffee.com",
+    entryUrls: [], watch: true,
+    notes: "Shopify, US. Its own limited-edition licensed mugs (Ghostbusters, ParaNorman and more) beside coffee; the whole-store feed is read and non-mugs are dropped. robots.txt allows Claude agents; /search is disallowed.",
+  },
+  {
     slug: "bigmouth", name: "BigMouth Inc", brand: "BigMouth Inc", adapter: "manual", baseUrl: "https://bigmouthinc.com",
     entryUrls: ["https://bigmouthinc.com/collections/coffee-mugs"], watch: false,
     notes: "Cloudflare managed challenge (403) on every page from both origins. A Shopify UCP catalogue endpoint is advertised at /.well-known/ucp, untested. Paste or type.",
@@ -80,9 +88,13 @@ const SOURCES: SeedSource[] = [
     notes: "robots.txt disallows search (*?q=). Product pages answer a Cloudflare challenge. The product sitemap is readable (28 mug URLs) if a discovery-only job is ever wanted.",
   },
   {
-    slug: "paladone", name: "Paladone (trade site)", brand: "Paladone", adapter: "manual", baseUrl: "https://trade.paladone.com",
-    entryUrls: [], watch: false,
-    notes: "B2B Magento: robots.txt disallows query strings and /catalog/; product JSON-LD is invalid, with no price and no GTIN. No consumer shop.",
+    slug: "paladone", name: "Paladone (trade site)", brand: "Paladone", adapter: "jsonld", baseUrl: "https://trade.paladone.com",
+    entryUrls: [
+      "drinkware", "trending/latest-releases", "trending/best-sellers", "gaming/playstation",
+      "gaming/super-mario", "film-tv/big-screen/star-wars", "film-tv/big-screen/harry-potter", "film-tv/big-screen/marvel", "film-tv/big-screen/disney",
+    ].map((path) => `https://trade.paladone.com/usa/${path}`),
+    include: ["mug"], fetchVia: "local", watch: false,
+    notes: "B2B Magento, read by the local runner: from Cloudflare the /usa/ category pages come back without their product grid. robots.txt disallows every query string (search, ?p= pagination) and /catalog/, so each category is read on its first page only. Product pages carry a JSON-LD Product; prices show 0.00 when logged out, so none are kept.",
   },
   {
     slug: "silver-buffalo", name: "Silver Buffalo", brand: "Silver Buffalo", adapter: "manual", baseUrl: "https://shop.silver-buffalo.com",
@@ -136,9 +148,9 @@ export const sources = internalMutation({
         adapter: source.adapter,
         baseUrl: source.baseUrl,
         entryUrls: source.entryUrls,
-        include: [],
+        include: source.include ?? [],
         exclude: [],
-        fetchVia: "cloud",
+        fetchVia: source.fetchVia ?? "cloud",
         watch: source.watch,
         enabled: source.adapter !== "manual",
         currency: source.currency,

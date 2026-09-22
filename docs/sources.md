@@ -11,15 +11,22 @@ a datacenter origin, and allows it in robots.txt.
 
 | Source | Feed | Notes |
 |---|---|---|
-| ABYstyle US | `abystyle.us/collections/3d-mugs`, `/collections/mugs` | 9 3D mugs, 38 mugs. The Luna teapot is here; the Pikachu 3D and Joker head mugs were not, at the time |
-| Bioworld | `shop.bioworldmerch.com/collections/sculpted-mugs-sippers`, `/collections/mugs` | Maker of the Ewok bas relief mug; carries the former Vandor line. Its `vendor` field is the licence ("Star Wars"), which is why sources carry their own brand (CONTRACTS A6). Prices look wholesale |
+| ABYstyle US | the whole-store feed, `abystyle.us/products.json` | 410 products, about 72 of them mugs, teapots and mug gift sets. The two mug collections alone held 47 and missed the Luna teapot, so the whole feed is read and non-mugs are dropped. No Pikachu 3D or Joker head mug among the 410 (2026-09-21) |
+| Bioworld | `shop.bioworldmerch.com/collections/sculpted-mugs-sippers`, `/collections/mugs` | Carries the former Vandor line, but no longer lists the Ewok bas relief mug (none of its 3,672 products, 2026-09-21). Its `vendor` field is the licence ("Star Wars"), which is why sources carry their own brand (CONTRACTS A6). Prices look wholesale |
 | Geeki Tikis (Beeline Creative) | `www.geekitikis.com/collections/shop-mugs` | 29 store-exclusive tiki mugs, no SKUs or barcodes |
 | Half Moon Bay | `www.halfmoonbayshop.co.uk/collections/mugs` | 134 mugs, 6 shaped, mostly printed licensed mugs. Product pages carry barcodes |
 | Grupo Erik | `erikstore.com/collections/tazas` | Spanish store: 47 tazas, 5 of them 3D |
+| Pop Culture Coffee | the whole-store feed, `www.popculturecoffee.com/products.json` | Its own limited-edition licensed mugs (Ghostbusters, ParaNorman and more) beside coffee: 90 products, 37 staged as mugs. robots.txt allows Claude's agents by name and disallows only `/search`. Currency USD, from the shop's own `/meta.json` |
 
 Shopify's public product JSON carries no barcode, and capacity is never a
 structured field: it is read from titles and descriptions by
 `shared/extract/facts.js`.
+
+## Read by the local runner (JSON-LD pages)
+
+| Source | Pages | Notes |
+|---|---|---|
+| Paladone (trade site) | the first page of nine `/usa/` categories (drinkware, trending, PlayStation, Super Mario, Star Wars, Harry Potter, Marvel, Disney), links whose address says "mug" | robots.txt disallows every query string, so search (`?q=`) and pagination (`?p=2`) are off limits: a category is read on its first page only. Product pages carry a valid JSON-LD Product (name, SKU, photo; the research's "invalid" no longer held on 2026-09-21), and prices show 0.00 when logged out, so none are kept. From Cloudflare the category pages come back without their product grid (one promoted link on every page), so the source fetches via the runner: 12 mugs from home against 1 from the Worker. A product URL found by browsing imports fine through `/admin/#import` |
 
 ## Manual only (paste or type)
 
@@ -28,8 +35,7 @@ structured field: it is read from titles and descriptions by
 | BigMouth Inc | A Cloudflare managed challenge answers every page, from any origin. A Shopify catalogue endpoint for agents is advertised at `/.well-known/ucp`; untested, and the lead worth following |
 | ABYstyle EU (abystyle.com) | PrestaShop behind a Cloudflare challenge. Product URLs embed the EAN13. Use ABYstyle US, or paste |
 | Funko | robots.txt disallows search (`*?q=`); product pages answer a challenge. The product sitemap is readable, so a discovery-only job could list new mug URLs for manual entry |
-| Paladone | No consumer shop. The trade site's robots.txt disallows query strings and `/catalog/`, and its product structured data is invalid |
-| Silver Buffalo | Its shop's robots.txt is `User-agent: *` / `Disallow: /`. Never fetched |
+| Silver Buffalo | Its shop's robots.txt is `User-agent: *` / `Disallow: /`. Never fetched, and neither is its Amazon store (see Amazon below) |
 | Just Funky | Same: `Disallow: /` for every agent. Never fetched |
 | Surreal Entertainment | A brand site with no catalogue |
 
