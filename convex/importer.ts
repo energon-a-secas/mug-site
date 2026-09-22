@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, internalMutation, mutation } from "./_generated/server";
-import { listingKey, canonicalUrl, normalizeListing } from "../shared/extract/normalize.js";
+import { listingKey, canonicalUrl, hostOf, normalizeListing } from "../shared/extract/normalize.js";
 import { fromPaste as parsePaste } from "../shared/extract/paste.js";
 import { adminList, requireAdmin } from "./lib/access.ts";
 import { isAdminSubject } from "./lib/admin.ts";
@@ -71,6 +71,10 @@ export const fromUrl = action({
       return fail("amazon", "Amazon is never fetched (robots.txt refuses it). Paste the product's title and details instead.");
     }
     const local = !proxyConfigured(proxyEnv());
+    // A6 and A13, as a scan passes them: the brand and currency of the source
+    // that owns this host, so an imported page matches its shop's scanned ones.
+    const owner: any = await ctx.runQuery(internal.sources.forHost, { host: hostOf(url) });
+    const known = { ...(owner?.brand ? { brand: owner.brand } : {}), ...(owner?.currency ? { currency: owner.currency } : {}) };
     const queued: any = await ctx.runMutation(internal.importer.queueUrl, { url, subject: identity!.subject, local });
     if (queued.existing || local) return done({ stagingId: queued.stagingId, status: queued.status, existing: queued.existing });
     // A single import has no scan to drain it, so a retryable failure gets its
@@ -78,7 +82,7 @@ export const fromUrl = action({
     let answer;
     let result: any;
     for (let attempt = 1; attempt <= 2; attempt++) {
-      answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url } });
+      answer = await callProxy(proxyEnv(), "/v1/extract", { json: { url, ...known } });
       result = await ctx.runMutation(internal.importer.applyUrl, {
         stagingId: queued.stagingId,
         runId: queued.runId,

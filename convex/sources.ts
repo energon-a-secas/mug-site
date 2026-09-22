@@ -6,6 +6,7 @@ import { canonicalUrl } from "../shared/extract/normalize.js";
 import { adminList, requireAdmin } from "./lib/access.ts";
 import { isAdminSubject } from "./lib/admin.ts";
 import { findOrCreateBrand } from "./lib/catalogue.ts";
+import { sourceForHost } from "./lib/sourceHost.ts";
 import { callProxy, proxyEnv } from "./lib/proxy.ts";
 import { done, fail } from "./lib/result.ts";
 import { cleanText, compact } from "./lib/util.ts";
@@ -119,6 +120,17 @@ export const remove = mutation({
 export const byId = internalQuery({
   args: { id: v.id("sources") },
   handler: async (ctx, args) => await ctx.db.get(args.id),
+});
+
+/** A single URL import's brand and currency: those of the source that owns the URL's host, if any. */
+export const forHost = internalQuery({
+  args: { host: v.string() },
+  handler: async (ctx, args) => {
+    const source = sourceForHost(await ctx.db.query("sources").take(500), args.host);
+    if (!source) return null;
+    const brand = source.brandId ? await ctx.db.get(source.brandId) : null;
+    return { slug: source.slug, brand: brand ? brand.name : null, currency: source.currency ?? null };
+  },
 });
 
 export const recordProbe = internalMutation({
