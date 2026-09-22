@@ -13,7 +13,8 @@ import { isListed, profileOf } from "./lib/profilesCore.ts";
 // list reads through the index that matches its first filter, then narrows
 // in memory, so no query scans the whole table.
 
-const SORTS = ["new", "owned", "wanted", "name"] as const;
+// A16: "featured" (3D and shaped first) is the default order.
+const SORTS = ["featured", "new", "owned", "wanted", "name"] as const;
 
 export const list = query({
   args: {
@@ -36,7 +37,7 @@ export const list = query({
     if (args.franchise && !franchise) return empty;
     const style = args.style && STYLES.includes(args.style) ? (args.style as any) : undefined;
     if (args.style && !style) return empty;
-    const sort = SORTS.includes(args.sort as any) ? args.sort : "new";
+    const sort = SORTS.includes(args.sort as any) ? args.sort : "featured";
     const text = fold(args.q || "").replace(/[^a-z0-9 ]+/g, " ").trim();
 
     let result;
@@ -52,12 +53,18 @@ export const list = query({
         })
         .paginate(args.paginationOpts);
     } else if (brand) {
-      let q = ctx.db.query("mugs").withIndex("by_brand", (i) => i.eq("brandId", brand._id).eq("status", "published")).order("desc");
+      let q = (sort === "new"
+        ? ctx.db.query("mugs").withIndex("by_brand", (i) => i.eq("brandId", brand._id).eq("status", "published"))
+        : ctx.db.query("mugs").withIndex("by_brand_featured", (i) => i.eq("brandId", brand._id).eq("status", "published"))
+      ).order("desc");
       if (franchise) q = q.filter((f) => f.eq(f.field("franchiseId"), franchise._id));
       if (style) q = q.filter((f) => f.eq(f.field("style"), style));
       result = await q.paginate(args.paginationOpts);
     } else if (franchise) {
-      let q = ctx.db.query("mugs").withIndex("by_franchise", (i) => i.eq("franchiseId", franchise._id).eq("status", "published")).order("desc");
+      let q = (sort === "new"
+        ? ctx.db.query("mugs").withIndex("by_franchise", (i) => i.eq("franchiseId", franchise._id).eq("status", "published"))
+        : ctx.db.query("mugs").withIndex("by_franchise_featured", (i) => i.eq("franchiseId", franchise._id).eq("status", "published"))
+      ).order("desc");
       if (style) q = q.filter((f) => f.eq(f.field("style"), style));
       result = await q.paginate(args.paginationOpts);
     } else if (style) {
@@ -72,8 +79,10 @@ export const list = query({
       result = await ctx.db.query("mugs").withIndex("by_status_wanted", (i) => i.eq("status", "published")).order("desc").paginate(args.paginationOpts);
     } else if (sort === "name") {
       result = await ctx.db.query("mugs").withIndex("by_status_name", (i) => i.eq("status", "published")).order("asc").paginate(args.paginationOpts);
-    } else {
+    } else if (sort === "new") {
       result = await ctx.db.query("mugs").withIndex("by_status_published", (i) => i.eq("status", "published")).order("desc").paginate(args.paginationOpts);
+    } else {
+      result = await ctx.db.query("mugs").withIndex("by_status_featured", (i) => i.eq("status", "published")).order("desc").paginate(args.paginationOpts);
     }
 
     const cache = cardCache();

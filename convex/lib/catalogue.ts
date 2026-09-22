@@ -101,6 +101,17 @@ export function searchTextFor(parts: {
     .trim();
 }
 
+// A16: the catalogue's default order puts sculpted and shaped mugs first,
+// then the other three-dimensional kinds, then everything else, newest first
+// within each. One number carries both, so a single descending index serves
+// it: the weight in the high digits, publishedAt (about 1.8e12) below them.
+const FEATURED_WEIGHT: Record<string, number> = { sculpted: 3, shaped: 3, relief: 2, tiki: 2, teapot: 2, stein: 1 };
+
+/** The sort key for "3D and shaped first": higher sorts first. */
+export function featuredKey(style: string | undefined, publishedAt: number): number {
+  return (FEATURED_WEIGHT[style ?? ""] ?? 0) * 1e13 + publishedAt;
+}
+
 export function mugNameKey(name: string, brand?: string | null): string {
   return nameKey(name, brand || undefined) || slugify(name);
 }

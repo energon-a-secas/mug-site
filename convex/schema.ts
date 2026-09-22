@@ -77,14 +77,19 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     publishedAt: v.number(),
+    // A16: "3D and shaped first", see featuredKey in convex/lib/catalogue.ts.
+    featured: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_status_published", ["status", "publishedAt"])
+    .index("by_status_featured", ["status", "featured"])
     .index("by_status_owned", ["status", "ownedCount"])
     .index("by_status_wanted", ["status", "wantedCount"])
     .index("by_status_name", ["status", "nameKey"])
     .index("by_brand", ["brandId", "status", "publishedAt"])
     .index("by_franchise", ["franchiseId", "status", "publishedAt"])
+    .index("by_brand_featured", ["brandId", "status", "featured"])
+    .index("by_franchise_featured", ["franchiseId", "status", "featured"])
     .index("by_style", ["style", "status", "publishedAt"])
     .index("by_gtin", ["gtin"])
     .index("by_brand_sku", ["brandId", "sku"])

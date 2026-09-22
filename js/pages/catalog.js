@@ -127,7 +127,7 @@ function paintUnits() {
 export async function start() {
   view.filters = readFilters();
   $('#q').value = view.filters.q || '';
-  $('#sort').value = view.filters.sort || 'new';
+  $('#sort').value = view.filters.sort || 'featured';
   paintUnits();
   $('#grid').innerHTML = skeletons(8);
 
@@ -151,7 +151,7 @@ export async function start() {
     e.preventDefault();
     apply({ ...view.filters, q: $('#q').value.trim() });
   });
-  $('#sort').addEventListener('change', () => apply({ ...view.filters, sort: $('#sort').value === 'new' ? '' : $('#sort').value }));
+  $('#sort').addEventListener('change', () => apply({ ...view.filters, sort: $('#sort').value === 'featured' ? '' : $('#sort').value }));
   $('#facets').addEventListener('click', (e) => {
     const button = e.target.closest('button[data-kind]');
     if (!button) return;
@@ -178,7 +178,7 @@ export async function start() {
   window.addEventListener('popstate', () => {
     view.filters = readFilters();
     $('#q').value = view.filters.q || '';
-    $('#sort').value = view.filters.sort || 'new';
+    $('#sort').value = view.filters.sort || 'featured';
     paintFacets();
     paintActive();
     loadPage(session, true);

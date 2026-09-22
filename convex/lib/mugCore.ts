@@ -2,7 +2,7 @@ import type { GenericDatabaseWriter } from "convex/server";
 import { LIMITS, MATERIALS, STYLES } from "../../shared/contract.js";
 import { normalizeGtin } from "../../shared/extract/names.js";
 import { canonicalUrl, hostOf } from "../../shared/extract/normalize.js";
-import { findOrCreateBrand, findOrCreateFranchise, mugNameKey, searchTextFor, uniqueMugSlug } from "./catalogue.ts";
+import { featuredKey, findOrCreateBrand, findOrCreateFranchise, mugNameKey, searchTextFor, uniqueMugSlug } from "./catalogue.ts";
 import { bump, STAT } from "./counters.ts";
 import { fail } from "./result.ts";
 import type { Failure } from "./result.ts";
@@ -183,9 +183,11 @@ export async function applyMugPatch(db: Db, mug: any, patch: Record<string, unkn
 
   const brandName = await nameOf(db, next.brandId);
   const franchiseName = await nameOf(db, next.franchiseId);
+  const publishedAt = !wasOn && isOn ? now : next.publishedAt;
   const derived = {
     nameKey: mugNameKey(next.name, brandName),
     searchText: searchTextFor({ name: next.name, brand: brandName, franchise: franchiseName, character: next.character, style: next.style, sku: next.sku, gtin: next.gtin }),
+    featured: featuredKey(next.style, publishedAt),
   };
   const finalPatch: Record<string, unknown> = { ...patch, ...derived, updatedAt: now };
   if (!wasOn && isOn) finalPatch.publishedAt = now;
@@ -239,6 +241,7 @@ export async function createMug(db: Db, listing: any, edits: Edits, now: number)
     ownedCount: 0,
     wantedCount: 0,
     searchText: searchTextFor({ name, brand: brand?.name, franchise: franchise?.name, character, style, sku, gtin }),
+    featured: featuredKey(style, now),
     createdAt: now,
     updatedAt: now,
     publishedAt: now,

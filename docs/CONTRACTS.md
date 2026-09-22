@@ -484,3 +484,11 @@ retried once later and then failed; only a 429 carrying a bot challenge is `UPST
 and goes to the runner. An extractor that throws on a hostile page answers `NOT_A_PRODUCT`
 rather than `INTERNAL`, since a retry would read the same bytes, and the runner records an item
 that throws as `INTERNAL` and moves on to the next one.
+
+**A16 (2026-09-21, from the owner).** The catalogue's default order is "3D and shaped first":
+sculpted and shaped mugs, then relief, tiki and teapots, then steins, then everything else,
+newest first within each. `mugs.featured` carries it as one number (a weight times 1e13
+plus `publishedAt`), kept in step by `createMug` and `applyMugPatch` like `searchText`, and
+indexed with the status alone and with brand and franchise. `catalog:list` takes `sort:
+"featured"` and defaults to it; `"new"` is still newest first. Existing mugs were given the
+key by `maintenance:backfillFeatured`.
