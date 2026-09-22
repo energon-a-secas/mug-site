@@ -492,3 +492,16 @@ plus `publishedAt`), kept in step by `createMug` and `applyMugPatch` like `searc
 indexed with the status alone and with brand and franchise. `catalog:list` takes `sort:
 "featured"` and defaults to it; `"new"` is still newest first. Existing mugs were given the
 key by `maintenance:backfillFeatured`.
+
+**A17 (2026-09-21, from the owner).** Signed-in collectors may propose corrections to a
+mug's labels (name, maker, franchise, character, style, capacity, material, lid, dishwasher,
+microwave, release year), including new franchise, character or maker names; an admin
+approves or rejects each one. A `suggestions` row holds only the fields that differed from
+the mug when proposed, each checked by `cleanEdits`; one pending row per collector per mug
+(a new proposal replaces it); 30 proposals a day per collector (`suggestion.create`); a
+suspended collector cannot propose. Approving re-reads the mug, drops fields it already
+says, and applies the rest through `saveMugEdits`, so counters, `searchText` and
+`featured` move as for an admin's edit; a new franchise or maker only exists once approved.
+Functions: `suggestions:create` (signed in), `suggestions:pending` and `suggestions:decide`
+(admin); `catalog:get` returns the viewer's own pending proposal as `suggestion`, and
+`admin:dashboard` counts `suggestionsPending`. Collectors' names are not shown publicly.

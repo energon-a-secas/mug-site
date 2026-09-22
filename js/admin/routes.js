@@ -6,7 +6,7 @@
 
 /** Every section, in rail order. */
 export const SECTION_IDS = Object.freeze([
-  'overview', 'review', 'import', 'sources', 'runs', 'catalog', 'images', 'community', 'runner',
+  'overview', 'review', 'import', 'sources', 'runs', 'catalog', 'images', 'community', 'suggestions', 'runner',
 ]);
 
 function decode(part) {

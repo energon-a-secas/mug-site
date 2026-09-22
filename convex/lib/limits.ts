@@ -6,6 +6,7 @@ export const LIMITS = {
   "profile.edit": { max: 30, windowMs: 60 * 60 * 1000 },
   "handle.change": { max: 3, windowMs: 30 * 24 * 60 * 60 * 1000 },
   "photo.upload": { max: 20, windowMs: 24 * 60 * 60 * 1000 },
+  "suggestion.create": { max: 30, windowMs: 24 * 60 * 60 * 1000 },
   "runner.request": { max: 3000, windowMs: 60 * 60 * 1000 },
 } as const;
 

@@ -8,6 +8,7 @@ import { cardCache, cardFor } from "./lib/cards.ts";
 import { readStat, STAT } from "./lib/counters.ts";
 import { imagesBase, imagesEnv, resolveRef } from "./lib/images.ts";
 import { isListed, profileOf } from "./lib/profilesCore.ts";
+import { mySuggestion } from "./lib/suggestionsCore.ts";
 
 // The public catalogue: anyone may call these (docs/CONTRACTS.md C6). Every
 // list reads through the index that matches its first filter, then narrows
@@ -167,6 +168,9 @@ export const get = query({
       }
     }
 
+    // A17: the viewer's own proposal still waiting for an admin, if any.
+    const suggestion = subject ? await mySuggestion(ctx.db, mug._id, subject) : null;
+
     const env = { PUBLISHING: process.env.PUBLISHING };
     const photos = [];
     for (const photo of await ctx.db
@@ -221,6 +225,7 @@ export const get = query({
       hidden: mug.status !== "published",
       canEdit: admin,
       mine,
+      suggestion,
       photos,
       related,
     };

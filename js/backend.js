@@ -37,6 +37,7 @@ export const FN = Object.freeze({
   }),
   importer: Object.freeze({ fromUrl: 'importer:fromUrl', fromPaste: 'importer:fromPaste', manual: 'importer:manual' }),
   mugs: Object.freeze({ adminList: 'mugs:adminList', adminGet: 'mugs:adminGet', save: 'mugs:save', pick: 'mugs:pick' }),
+  suggestions: Object.freeze({ create: 'suggestions:create', pending: 'suggestions:pending', decide: 'suggestions:decide' }),
   images: Object.freeze({
     uploadUrl: 'images:uploadUrl',
     attachThumb: 'images:attachThumb',

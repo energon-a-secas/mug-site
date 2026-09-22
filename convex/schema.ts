@@ -254,6 +254,26 @@ export default defineSchema({
     .index("by_mug", ["mugId", "status", "createdAt"])
     .index("by_subject", ["subject", "createdAt"]),
 
+  // A17: a signed-in collector's proposed corrections to one mug's labels,
+  // applied only when an admin approves. `changes` holds the fields that
+  // differed from the mug when proposed, checked by cleanEdits
+  // (convex/lib/suggestionsCore.ts): field -> new value, null to clear.
+  suggestions: defineTable({
+    mugId: v.id("mugs"),
+    subject: v.string(),
+    changes: v.any(),
+    note: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
+    reason: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.string()),
+  })
+    .index("by_status", ["status", "createdAt"])
+    .index("by_mug_subject", ["mugId", "subject", "status"])
+    .index("by_subject", ["subject", "createdAt"]),
+
   runnerTokens: defineTable({
     label: v.string(),
     hash: v.string(),

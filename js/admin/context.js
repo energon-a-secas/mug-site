@@ -16,6 +16,7 @@ export function railCounts(dash) {
     runs: dash.activeRuns,
     images: dash.images.thumbs,
     community: dash.photosPending,
+    suggestions: dash.suggestionsPending,
     runner: dash.queue.needsLocal + dash.images.blocked,
   };
 }

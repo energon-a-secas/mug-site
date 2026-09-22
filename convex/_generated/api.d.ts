@@ -35,7 +35,9 @@ import type * as lib_result from "../lib/result.js";
 import type * as lib_reviewCore from "../lib/reviewCore.js";
 import type * as lib_runnerCore from "../lib/runnerCore.js";
 import type * as lib_shelfCore from "../lib/shelfCore.js";
+import type * as lib_sourceHost from "../lib/sourceHost.js";
 import type * as lib_stageCore from "../lib/stageCore.js";
+import type * as lib_suggestionsCore from "../lib/suggestionsCore.js";
 import type * as lib_tokens from "../lib/tokens.js";
 import type * as lib_util from "../lib/util.js";
 import type * as maintenance from "../maintenance.js";
@@ -51,6 +53,7 @@ import type * as seed from "../seed.js";
 import type * as shelf from "../shelf.js";
 import type * as sources from "../sources.js";
 import type * as staging from "../staging.js";
+import type * as suggestions from "../suggestions.js";
 
 import type {
   ApiFromModules,
@@ -86,7 +89,9 @@ declare const fullApi: ApiFromModules<{
   "lib/reviewCore": typeof lib_reviewCore;
   "lib/runnerCore": typeof lib_runnerCore;
   "lib/shelfCore": typeof lib_shelfCore;
+  "lib/sourceHost": typeof lib_sourceHost;
   "lib/stageCore": typeof lib_stageCore;
+  "lib/suggestionsCore": typeof lib_suggestionsCore;
   "lib/tokens": typeof lib_tokens;
   "lib/util": typeof lib_util;
   maintenance: typeof maintenance;
@@ -102,6 +107,7 @@ declare const fullApi: ApiFromModules<{
   shelf: typeof shelf;
   sources: typeof sources;
   staging: typeof staging;
+  suggestions: typeof suggestions;
 }>;
 
 /**

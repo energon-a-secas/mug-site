@@ -24,6 +24,7 @@ const SECTIONS = {
   catalog: () => import('../admin/catalog.js'),
   images: () => import('../admin/images.js'),
   community: () => import('../admin/community.js'),
+  suggestions: () => import('../admin/suggestions.js'),
   runner: () => import('../admin/runner.js'),
 };
 

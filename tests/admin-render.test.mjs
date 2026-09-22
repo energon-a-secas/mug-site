@@ -197,6 +197,7 @@ test('overview: tiles link to their sections, counts cap, configuration in words
     queue: { pending: 500, queued: 0, needsLocal: 3, failed: 0 },
     images: { pending: 1, blocked: 0, failed: 0, thumbs: 7 },
     photosPending: 2,
+    suggestionsPending: 4,
     activeRuns: 0,
     mugs: 1234,
     config: { proxy: false, imagesBase: `https://img.example/${EVIL}`, publishing: false, admins: 1 },
@@ -204,13 +205,13 @@ test('overview: tiles link to their sections, counts cap, configuration in words
   const html = overviewHtml(dash);
   assert.ok(html.includes('500+'));
   assert.ok(html.includes('1,234'), 'the mug count is a stat, never capped');
-  for (const href of ['#review/pending', '#review/needsLocal', '#images', '#community', '#runs', '#catalog']) assert.ok(html.includes(`href="${href}"`));
+  for (const href of ['#review/pending', '#review/needsLocal', '#images', '#community', '#suggestions', '#runs', '#catalog']) assert.ok(html.includes(`href="${href}"`));
   assert.match(html, /Cloud fetching is off; scans need the runner/);
   assert.match(html, /PUBLISHING=open/);
   assert.ok(html.includes('1 account'));
   assert.ok(!html.includes('<img src=x'));
   assert.ok(!overviewHtml({ ...dash, config: { proxy: true, publishing: true, imagesBase: null, admins: 2 } }).includes('notice--warn'));
-  assert.deepEqual(railCounts(dash), { review: 500, runs: 0, images: 7, community: 2, runner: 3 });
+  assert.deepEqual(railCounts(dash), { review: 500, runs: 0, images: 7, community: 2, suggestions: 4, runner: 3 });
   assert.equal(countText(12, 500), '12');
 });
 

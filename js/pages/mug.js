@@ -12,6 +12,7 @@ import { resize, upload } from '../images.js';
 import { getUnits, setUnits } from '../prefs.js';
 import { $, $$, bareParam, escHtml, formatCapacity, formatPrice, safeHref, showToast, timeAgo } from '../utils.js';
 import { gauge, notConnected } from './common.js';
+import { readSuggestion, suggestPanel } from './suggest.js';
 
 const view = { mug: null, image: 0, session: null, busy: false };
 
@@ -112,6 +113,7 @@ function render() {
         ${shelfControls(m)}
         ${notesForm(m.mine)}
         ${shopLinks(m)}
+        ${suggestPanel(m, !!(view.session && view.session.state.signedIn))}
         ${m.canEdit ? `<p class="hint"><a href="/admin/#catalog">Edit in admin</a></p>` : ''}
       </div>
     </div>
@@ -147,6 +149,18 @@ async function saveNotes(form) {
   });
   showToast(result.ok ? 'Notes saved.' : result.message, result.ok ? 'info' : 'error');
   if (result.ok) await refresh();
+}
+
+async function sendSuggestion(form) {
+  const { changes, note } = readSuggestion(form, view.mug);
+  if (!Object.keys(changes).length) return showToast('Change a label first: the form shows what the page says now.', 'error');
+  const button = form.querySelector('[type="submit"]');
+  button.disabled = true;
+  const result = await view.session.mutation(FN.suggestions.create, { slug: view.mug.slug, changes, ...(note ? { note } : {}) });
+  button.disabled = false;
+  if (!result.ok) return showToast(result.message, 'error');
+  showToast(result.replaced ? 'Suggestion updated. A maintainer will review it.' : 'Thanks. A maintainer will review your suggestion.');
+  await refresh();
 }
 
 async function addPhoto(file) {
@@ -215,6 +229,7 @@ export async function start() {
       render();
       return;
     }
+    if (e.target.closest('[data-suggest-sign-in]')) return session.requireSignIn({ reason: 'Sign in to suggest a correction.' });
     const unitsBtn = e.target.closest('[data-units]');
     if (unitsBtn) {
       setUnits(unitsBtn.dataset.units);
@@ -225,6 +240,9 @@ export async function start() {
     if (e.target.id === 'notesForm') {
       e.preventDefault();
       saveNotes(e.target);
+    } else if (e.target.id === 'suggestForm') {
+      e.preventDefault();
+      sendSuggestion(e.target);
     }
   });
   root.addEventListener('change', (e) => {

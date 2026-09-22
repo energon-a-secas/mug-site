@@ -52,6 +52,7 @@ export const dashboard = query({
         thumbs: await images("thumbs"),
       },
       photosPending: await countUpTo(ctx.db.query("photos").withIndex("by_status", (q) => q.eq("status", "pending")), cap),
+      suggestionsPending: await countUpTo(ctx.db.query("suggestions").withIndex("by_status", (q) => q.eq("status", "pending")), cap),
       activeRuns: active.length,
       mugs: await readStat(ctx.db, STAT.mugs),
       config: {

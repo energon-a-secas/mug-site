@@ -16,6 +16,7 @@ export const TILES = Object.freeze([
   { label: 'mugs whose images failed', href: '#catalog/failed', value: (d) => d.images.failed, capped: true },
   { label: 'mugs missing thumbnails', href: '#images', value: (d) => d.images.thumbs, capped: true },
   { label: 'photos to moderate', href: '#community', value: (d) => d.photosPending, capped: true },
+  { label: 'label suggestions to review', href: '#suggestions', value: (d) => d.suggestionsPending, capped: true },
   { label: 'active scans', href: '#runs', value: (d) => d.activeRuns, capped: false },
   { label: 'mugs published', href: '#catalog', value: (d) => d.mugs, capped: false, quiet: true },
 ]);
